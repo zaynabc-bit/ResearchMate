@@ -2101,6 +2101,7 @@ body.unauthenticated .main-content {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
+  padding-top: 52px;
 }
 
 .home-feature-card {
