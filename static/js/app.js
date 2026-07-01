@@ -692,6 +692,7 @@ function navigateTo(view) {
     loadComparisons();
   } else if (view === 'web-references') {
     switchView('web-references');
+    loadRecentSearches();
   } else if (view === 'rewrite-studio') {
     switchView('rewrite-studio');
     loadRewriteHistory();
@@ -2687,6 +2688,8 @@ async function searchGlobalWebReferences() {
     const references = await res.json();
     loading.style.display = 'none';
     content.style.display = 'block';
+    
+    loadRecentSearches();
 
     if (!references || references.length === 0) {
       content.innerHTML = `<div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-2);">
@@ -2719,6 +2722,37 @@ async function searchGlobalWebReferences() {
     loading.style.display = 'none';
     showToast(err.message, 'error');
   }
+}
+
+async function loadRecentSearches() {
+  if (!session) return;
+  try {
+    const res = await fetch('/api/papers/references/search/history');
+    if (!res.ok) return;
+    const history = await res.json();
+    const container = document.getElementById('discover-recent-searches');
+    if (!container) return;
+    
+    if (!history || history.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    
+    container.innerHTML = history.map(q => `
+      <div onclick="searchFromHistory('${escHtml(q).replace(/'/g, "\\'")}')" style="cursor: pointer; padding: 6px 14px; background: var(--bg-1); border: 1px solid var(--border); border-radius: 16px; font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='var(--surface)'; this.style.color='var(--text)';" onmouseout="this.style.background='var(--bg-1)'; this.style.color='var(--text-2)';">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        ${escHtml(q)}
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error('Failed to load recent searches', err);
+  }
+}
+
+function searchFromHistory(query) {
+  const inputEl = document.getElementById('global-references-input');
+  if(inputEl) inputEl.value = query;
+  searchGlobalWebReferences();
 }
 
 // ============================================

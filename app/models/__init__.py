@@ -4,3 +4,4 @@ from .chunk import PaperChunk
 from .chat import ChatMessage
 from .comparison import PaperComparison
 from .rewrite import SavedRewrite
+from .search import DiscoverSearch

@@ -418,9 +418,13 @@
         <h1 class="view-title" style="margin-bottom: 8px;">Discover</h1>
         <p style="font-size: 14px; color: var(--text-2); margin-bottom: 24px;">Search across millions of academic papers, articles, and scientific journals instantly.</p>
         
-        <div style="display: flex; gap: 12px; margin-bottom: 32px;">
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
           <input type="text" id="global-references-input" class="text-input" placeholder="e.g. latest research on human cell biology..." onkeydown="if(event.key === 'Enter') searchGlobalWebReferences()">
           <button class="btn-primary" onclick="searchGlobalWebReferences()" style="padding: 0 24px;">Search</button>
+        </div>
+        
+        <div id="discover-recent-searches" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 32px;">
+          <!-- Recent searches will go here -->
         </div>
         
         <div id="global-references-loading" class="summary-generating" style="display:none;">

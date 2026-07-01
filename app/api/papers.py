@@ -3,11 +3,12 @@ import shutil
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 from pydantic import BaseModel
 from typing import Optional
 from app.database import get_db
 from app.models.paper import ResearchPaper
+from app.models.search import DiscoverSearch
 from app.api.auth import get_current_user_id
 from app.services.pdf_service import extract_text_from_file, get_filename_title
 from dotenv import load_dotenv
@@ -295,7 +296,7 @@ async def delete_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_i
     return {"message": "Paper deleted"}
 
 @router.get("/references/search")
-async def search_web_references(q: str):
+async def search_web_references(q: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
     import urllib.request
     import urllib.parse
     import json
@@ -303,6 +304,16 @@ async def search_web_references(q: str):
     
     if not q:
         return []
+
+    # Save to history
+    result = await db.execute(select(DiscoverSearch).where(DiscoverSearch.user_id == user_id, DiscoverSearch.query == q))
+    existing = result.scalar_one_or_none()
+    if existing:
+        existing.created_at = func.now()
+    else:
+        new_search = DiscoverSearch(user_id=user_id, query=q)
+        db.add(new_search)
+    await db.commit()
 
     # Clean up query slightly
     search_query = re.sub(r'[^\w\s]', '', q)
@@ -418,3 +429,14 @@ async def get_paper_references(
     except Exception as e:
         print(f"CrossRef API Error: {e}")
         return []
+
+@router.get("/references/search/history")
+async def get_recent_searches(db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(
+        select(DiscoverSearch)
+        .where(DiscoverSearch.user_id == user_id)
+        .order_by(DiscoverSearch.created_at.desc())
+        .limit(5)
+    )
+    searches = result.scalars().all()
+    return [s.query for s in searches]
