@@ -553,22 +553,29 @@ function renderPapers() {
 
     return `
     <div class="paper-card" onclick="openPaper('${p.id}')" style="animation-delay:${i * 0.04}s">
-      <div class="card-checkbox-wrapper" onclick="event.stopPropagation();" style="position: absolute; top: 12px; left: 12px; z-index: 10;">
-        <input type="checkbox" class="card-checkbox" ${state.selectedPaperIds.includes(p.id) ? 'checked' : ''} onchange="togglePaperSelection('${p.id}')" style="width: 16px; height: 16px; cursor: pointer;" />
+      
+      <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px;">
+        <div class="card-checkbox-wrapper" onclick="event.stopPropagation();" style="position: static; padding-top: 2px;">
+          <input type="checkbox" class="card-checkbox" ${state.selectedPaperIds.includes(p.id) ? 'checked' : ''} onchange="togglePaperSelection('${p.id}')" style="width: 16px; height: 16px; cursor: pointer;" />
+        </div>
+        
+        <div class="card-title" style="margin: 0; flex: 1;">${escHtml(p.title)}</div>
+        
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <span style="font-size: 10px; font-weight: 700; padding: 3px 6px; background: rgba(99,102,241,0.1); color: var(--primary); border: 1px solid rgba(99,102,241,0.2); border-radius: 4px; letter-spacing: 0.05em;">${docType}</span>
+          <button class="card-fav-btn ${p.is_favourite ? 'starred' : ''}"
+            onclick="event.stopPropagation(); toggleCardFavourite('${p.id}', ${p.is_favourite})"
+            title="${p.is_favourite ? 'Remove from favourites' : 'Add to favourites'}"
+            style="position: static; padding: 2px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="${p.is_favourite ? 'currentColor' : 'none'}">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
       </div>
-      <button class="card-fav-btn ${p.is_favourite ? 'starred' : ''}"
-        onclick="event.stopPropagation(); toggleCardFavourite('${p.id}', ${p.is_favourite})"
-        title="${p.is_favourite ? 'Remove from favourites' : 'Add to favourites'}">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="${p.is_favourite ? 'currentColor' : 'none'}">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2"/>
-        </svg>
-      </button>
 
-      <div class="card-icon">${docType}</div>
-
-      <div class="card-title">${escHtml(p.title)}</div>
-      <div class="card-authors">${escHtml(p.authors || 'Unknown Author')}</div>
-      ${p.custom_header ? `<div class="card-description" title="${escHtml(p.custom_header)}">${escHtml(p.custom_header)}</div>` : ''}
+      <div class="card-authors" style="margin-left: 28px;">${escHtml(p.authors || 'Unknown Author')}</div>
+      ${p.custom_header ? `<div class="card-description" style="margin-left: 28px;" title="${escHtml(p.custom_header)}">${escHtml(p.custom_header)}</div>` : ''}
 
       <div class="card-meta">
         <span class="card-date">${formatDate(p.created_at)}</span>
