@@ -2891,6 +2891,8 @@ async function loadRewriteSession(id, title) {
 }
 
 function createNewRewriteSession() {
+  const isAlreadyNew = state.currentRewriteSessionId === null && document.getElementById('rewrite-original').value.trim() === '';
+  
   state.currentRewriteSessionId = null;
   document.getElementById('rewrite-session-title').textContent = 'New Rewrite Session';
   document.getElementById('btn-rename-rewrite').style.display = 'none';
@@ -2909,6 +2911,10 @@ function createNewRewriteSession() {
   updateRewriteStats();
   
   loadRewriteSessions(); // Update highlight
+  
+  if (!isAlreadyNew) {
+    showToast('Started a new session');
+  }
 }
 
 async function renameRewriteSession() {
