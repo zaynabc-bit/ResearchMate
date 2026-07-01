@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import Optional
 from app.database import get_db
 from app.models.paper import ResearchPaper
+from app.api.auth import get_current_user_id
 from app.services.pdf_service import extract_text_from_file, get_filename_title
 from dotenv import load_dotenv
 
@@ -35,8 +36,9 @@ async def list_papers(
     sort: Optional[str] = "created_at",
     q: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
-    query = select(ResearchPaper)
+    query = select(ResearchPaper).where(ResearchPaper.user_id == user_id)
 
     if folder_id:
         query = query.where(ResearchPaper.folder_id == folder_id)
@@ -72,6 +74,7 @@ async def list_papers(
 async def upload_paper(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
     allowed_exts = {".pdf", ".docx", ".doc", ".rtf", ".txt", ".md", ".pptx", ".csv", ".xlsx", ".xls"}
     ext = os.path.splitext(file.filename)[1].lower()
@@ -111,6 +114,7 @@ async def upload_paper(
         file_size=doc_data["file_size"],
         page_count=doc_data["page_count"],
         summary_status="none",
+        user_id=user_id,
     )
 
     db.add(paper)
@@ -134,9 +138,10 @@ async def upload_paper(
 async def export_citations(
     folder_id: Optional[str] = None,
     format: Optional[str] = "apa",
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
-    query = select(ResearchPaper)
+    query = select(ResearchPaper).where(ResearchPaper.user_id == user_id)
     if folder_id and folder_id != "all":
         query = query.where(ResearchPaper.folder_id == folder_id)
         
@@ -183,8 +188,8 @@ async def export_citations(
 
 
 @router.get("/{paper_id}/citation")
-async def get_paper_citation(paper_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+async def get_paper_citation(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -194,9 +199,9 @@ async def get_paper_citation(paper_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{paper_id}/slides")
-async def get_paper_slides(paper_id: str, db: AsyncSession = Depends(get_db)):
+async def get_paper_slides(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
     """Return extracted slide images and text for a PPTX paper."""
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -223,8 +228,8 @@ async def get_paper_slides(paper_id: str, db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/{paper_id}")
-async def get_paper(paper_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+async def get_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -236,8 +241,9 @@ async def update_paper(
     paper_id: str,
     update: PaperUpdate,
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -268,8 +274,8 @@ async def update_paper(
 
 
 @router.delete("/{paper_id}")
-async def delete_paper(paper_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+async def delete_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -287,3 +293,72 @@ async def delete_paper(paper_id: str, db: AsyncSession = Depends(get_db)):
     await db.delete(paper)
     await db.commit()
     return {"message": "Paper deleted"}
+
+@router.get("/{paper_id}/references")
+async def get_paper_references(
+    paper_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    query = select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id)
+    result = await db.execute(query)
+    paper = result.scalar_one_or_none()
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    import urllib.request
+    import urllib.parse
+    import json
+    import re
+    
+    # Use paper title or a core sentence from the summary
+    search_query = paper.title or paper.filename or "research"
+    # Clean up query slightly to improve search
+    search_query = re.sub(r'[^\w\s]', '', search_query)
+    
+    safe_query = urllib.parse.quote(search_query)
+    url = f"https://api.crossref.org/works?query={safe_query}&select=title,author,URL,abstract,published-print&rows=5"
+    
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'ResearchMate/1.0 (mailto:admin@example.com)'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read())
+            items = data.get("message", {}).get("items", [])
+            
+            references = []
+            for item in items:
+                # Format authors
+                authors = []
+                for a in item.get("author", []):
+                    if "family" in a:
+                        authors.append(f"{a.get('given', '')} {a['family']}".strip())
+                author_str = ", ".join(authors) if authors else "Unknown Authors"
+                
+                # Format year
+                year = ""
+                try:
+                    year = str(item.get("published-print", {}).get("date-parts", [[None]])[0][0])
+                except:
+                    pass
+                
+                title = item.get("title", ["Unknown Title"])[0]
+                url_val = item.get("URL", "")
+                abstract = item.get("abstract", "")
+                
+                # Clean up abstract if it has HTML tags
+                if abstract:
+                    abstract = re.sub(r'<[^>]+>', '', abstract)
+                    if abstract.startswith('jats:p'):
+                        abstract = abstract[6:]
+                
+                references.append({
+                    "title": title,
+                    "authors": author_str,
+                    "year": year,
+                    "url": url_val,
+                    "abstract": abstract
+                })
+            return references
+    except Exception as e:
+        print(f"CrossRef API Error: {e}")
+        return []
