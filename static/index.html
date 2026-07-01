@@ -3,6 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    window.onerror = function(msg, url, line, col, error) {
+      const div = document.createElement('div');
+      div.style.position = 'fixed';
+      div.style.top = '0';
+      div.style.left = '0';
+      div.style.width = '100%';
+      div.style.background = '#ef4444';
+      div.style.color = '#fff';
+      div.style.padding = '12px';
+      div.style.zIndex = '999999';
+      div.style.fontSize = '14px';
+      div.style.fontWeight = 'bold';
+      div.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+      div.textContent = 'JS Error: ' + msg + ' in ' + url + ' (Line ' + line + ', Col ' + col + ')';
+      document.body.appendChild(div);
+      return false;
+    };
+  </script>
   <title>ResearchMate — AI Academic Research Workspace</title>
   <meta name="description" content="Import, summarise and chat with your academic research papers using local AI. Built for university students." />
   <link rel="icon" type="image/x-icon" href="static/favicon.ico" />

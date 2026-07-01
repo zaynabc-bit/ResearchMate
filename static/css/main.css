@@ -358,6 +358,21 @@ body {
 .view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
 .view.active { display: flex; }
 
+/* Unauthenticated State */
+body.unauthenticated .sidebar {
+  display: none !important;
+}
+body.unauthenticated .mobile-header {
+  display: none !important;
+}
+body.unauthenticated .main-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+}
+
 /* ============================================
    TOPBAR (Library)
    ============================================ */

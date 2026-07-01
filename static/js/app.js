@@ -5,7 +5,16 @@
 // Supabase Config
 const supabaseUrl = 'https://fsuztgcsrbuvhvnnblbl.supabase.co';
 const supabaseKey = 'sb_publishable_k-kL82doDKALUtUgGuuOgg_gd7DTJnj';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+let supabase = null;
+try {
+  if (window.supabase) {
+    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  } else {
+    console.warn("Supabase SDK not loaded from CDN.");
+  }
+} catch (e) {
+  console.error("Failed to initialize Supabase:", e);
+}
 let session = null;
 
 // Intercept fetch to support custom Backend API URL (for hosting on GitHub Pages)
@@ -81,22 +90,44 @@ const FOLDER_COLOURS = [
 
 // UI Initialization
 window.addEventListener('DOMContentLoaded', async () => {
-  // Check auth
-  const { data, error } = await supabase.auth.getSession();
-  if (data && data.session) {
-    session = data.session;
-    document.getElementById('view-auth').classList.remove('active');
-    document.getElementById('view-home').classList.add('active');
-  } else {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-auth').classList.add('active');
-  }
-  // Check theme
+  // Check theme first so it applies immediately
   const savedTheme = localStorage.getItem('theme') || 'dark';
   if (savedTheme === 'light') {
     document.documentElement.setAttribute('data-theme', 'light');
     const toggleBtn = document.getElementById('theme-toggle');
     if (toggleBtn) toggleBtn.textContent = '🌙';
+  }
+
+  // Check auth
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (data && data.session) {
+        session = data.session;
+        document.body.classList.remove('unauthenticated');
+        document.getElementById('view-auth').classList.remove('active');
+        document.getElementById('view-home').classList.add('active');
+      } else {
+        document.body.classList.add('unauthenticated');
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-auth').classList.add('active');
+      }
+    } catch (err) {
+      console.error("Auth check failed:", err);
+      document.body.classList.add('unauthenticated');
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.getElementById('view-auth').classList.add('active');
+    }
+  } else {
+    // If Supabase is blocked (e.g. adblock), fallback to local dev mode automatically
+    console.warn("Supabase unavailable. Falling back to local mode.");
+    document.body.classList.add('unauthenticated');
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-auth').classList.add('active');
+    const errorMsg = document.getElementById('auth-error-msg');
+    if (errorMsg) {
+      errorMsg.textContent = "Vault offline. Check connection or ad-blocker.";
+    }
   }
 
   // Load API Keys
@@ -158,6 +189,7 @@ async function handleAuth(type) {
     document.getElementById('view-home').classList.add('active');
     
     // Load user data
+    document.body.classList.remove('unauthenticated');
     fetchFolders().then(() => {
       updateFoldersUI();
       updateSidebarFolders();
@@ -174,8 +206,11 @@ async function handleAuth(type) {
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
   session = null;
+  document.body.classList.add('unauthenticated');
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-auth').classList.add('active');
   state.papers = [];
