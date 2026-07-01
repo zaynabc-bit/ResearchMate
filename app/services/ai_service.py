@@ -683,3 +683,57 @@ async def generate_comparison(
             except Exception:
                 pass
         raise Exception(f"Failed to parse LLM comparison output: {raw[:300]}")
+# ── Rewrite Studio ────────────────────────────────────────
+
+async def rewrite_text(original_text: str, mode: str, tone_example: str = None) -> str:
+    """Rewrite text using AI based on the specified mode."""
+    mode_prompts = {
+        "natural": "Rewrite the following text to sound more natural and fluent.",
+        "academic": "Rewrite the following text in a formal academic tone suitable for university-level research.",
+        "professional": "Rewrite the following text in a clear, professional business style.",
+        "friendly": "Rewrite the following text in a warm, friendly, and conversational tone.",
+        "simple": "Rewrite the following text in Simple English so it is extremely easy to understand.",
+        "concise": "Rewrite the following text to be concise. Remove unnecessary words and fluff while keeping the core message.",
+        "expand": "Expand on the ideas in the following text, providing more detail and elaboration without inventing new facts.",
+        "grammar": "Correct all grammar, spelling, and punctuation errors in the following text, and improve its clarity.",
+        "british": "Rewrite the following text using British English spelling (e.g., 'ise' instead of 'ize', 'colour' instead of 'color') and phrasing.",
+        "american": "Rewrite the following text using American English spelling and phrasing.",
+    }
+    
+    instruction = mode_prompts.get(mode, mode_prompts["natural"])
+    if mode == "tone" and tone_example:
+        instruction = f"Rewrite the following text to match the tone and style of this example:\n[EXAMPLE]\n{tone_example}\n[END EXAMPLE]"
+        
+    system_prompt = f"""You are an expert writing assistant and copyeditor.
+Your task is to rewrite the user's text according to the following instruction:
+{instruction}
+
+CRITICAL RULES:
+- Never invent facts.
+- Never fabricate references.
+- Never change the intended meaning of the original text.
+- Never add unsupported claims.
+- Preserve the original formatting where possible.
+- Output ONLY the rewritten text, nothing else. Do not add introductory or concluding remarks."""
+
+    payload = {
+        "model": SMART_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": original_text}
+        ],
+        "stream": False,
+        "options": {"temperature": 0.4}
+    }
+    
+    url = f"{OLLAMA_URL}/api/chat"
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            resp = await client.post(url, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("message", {}).get("content", "").strip()
+            else:
+                return "Error: Could not process rewrite request."
+    except Exception as e:
+        return f"Error connecting to local AI: {str(e)}"

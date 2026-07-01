@@ -36,6 +36,11 @@ class ChatRequest(BaseModel):
 class SummariseRequest(BaseModel):
     mode: Optional[str] = "fast"
 
+class RewriteRequest(BaseModel):
+    original_text: str
+    mode: str
+    tone_example: Optional[str] = None
+    user_id: str
 
 # ── Status ────────────────────────────────────────────────
 
@@ -423,7 +428,21 @@ async def index_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_id
         )
 
     n = await build_paper_chunks(paper_id, paper.extracted_text, db)
-    return {"message": f"Indexed {n} chunks with embeddings", "chunks": n}
+    return {"message": f"Successfully indexed {n} chunks"}
 
+# ── Rewrite Studio ────────────────────────────────────────
 
-
+@router.post("/rewrite")
+async def rewrite_text_endpoint(req: RewriteRequest):
+    """Rewrite text using AI based on selected mode."""
+    from app.services.ai_service import rewrite_text
+    
+    ollama_ok = await check_ollama_available()
+    if not ollama_ok:
+        raise HTTPException(status_code=503, detail="Ollama is not running. Start Ollama first.")
+        
+    try:
+        rewritten = await rewrite_text(req.original_text, req.mode, req.tone_example)
+        return {"rewritten_text": rewritten}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

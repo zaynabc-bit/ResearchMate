@@ -2525,6 +2525,42 @@ body.unauthenticated .main-content {
 }
 
 /* ============================================
+   REWRITE STUDIO
+   ============================================ */
+.rewrite-modes-container::-webkit-scrollbar {
+  height: 0px;
+  background: transparent;
+}
+.rewrite-mode-card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+.rewrite-mode-card:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+  transform: translateY(-1px);
+}
+.rewrite-mode-card.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+}
+
+.rewrite-panel textarea::placeholder {
+  color: var(--text-3);
+  font-style: italic;
+}
+
+/* ============================================
    MOBILE RESPONSIVENESS
    ============================================ */
 

@@ -669,6 +669,11 @@ function navigateTo(view) {
     webRefNav.classList.toggle('active', view === 'web-references');
   }
 
+  const rewriteNav = document.getElementById('nav-rewrite-studio');
+  if (rewriteNav) {
+    rewriteNav.classList.toggle('active', view === 'rewrite-studio');
+  }
+
   if (view === 'home') {
     switchView('home');
     updateHomeDashboard();
@@ -687,6 +692,8 @@ function navigateTo(view) {
     loadComparisons();
   } else if (view === 'web-references') {
     switchView('web-references');
+  } else if (view === 'rewrite-studio') {
+    switchView('rewrite-studio');
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
@@ -1519,7 +1526,7 @@ function updateAIBadge() {
 // ============================================
 function switchView(view) {
   // All possible view IDs
-  const allViews = ['view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active'];
+  const allViews = ['view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active', 'view-web-references', 'view-rewrite-studio'];
   allViews.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -1527,7 +1534,7 @@ function switchView(view) {
 
   const target = document.getElementById('view-' + view);
   if (target) {
-    if (view === 'home' || view === 'settings' || view === 'comparisons') {
+    if (view === 'home' || view === 'settings' || view === 'comparisons' || view === 'web-references' || view === 'rewrite-studio') {
       target.style.display = 'block';
     } else {
       target.style.display = 'flex';
@@ -2713,3 +2720,95 @@ async function searchGlobalWebReferences() {
   }
 }
 
+// ============================================
+// REWRITE STUDIO
+// ============================================
+function setRewriteMode(mode) {
+  state.rewriteMode = mode;
+  document.querySelectorAll('.rewrite-mode-card').forEach(card => {
+    let text = card.textContent.toLowerCase();
+    let isActive = false;
+    if (mode === 'simple') isActive = text.includes('simple');
+    else if (mode === 'grammar') isActive = text.includes('grammar');
+    else if (mode === 'british') isActive = text.includes('british');
+    else if (mode === 'american') isActive = text.includes('american');
+    else if (mode === 'tone') isActive = text.includes('tone');
+    else isActive = text === mode;
+    
+    card.classList.toggle('active', isActive);
+  });
+  const toneContainer = document.getElementById('rewrite-tone-match-container');
+  if (toneContainer) toneContainer.style.display = mode === 'tone' ? 'block' : 'none';
+}
+
+function updateRewriteStats() {
+  const orig = document.getElementById('rewrite-original').value;
+  const origWords = orig.trim() ? orig.trim().split(/\s+/).length : 0;
+  document.getElementById('rewrite-orig-words').textContent = origWords + ' words';
+  document.getElementById('rewrite-orig-chars').textContent = orig.length + ' characters';
+
+  const res = document.getElementById('rewrite-result').value;
+  const resWords = res.trim() ? res.trim().split(/\s+/).length : 0;
+  document.getElementById('rewrite-res-words').textContent = resWords + ' words';
+  document.getElementById('rewrite-res-chars').textContent = res.length + ' characters';
+}
+
+function clearRewriteOriginal() {
+  document.getElementById('rewrite-original').value = '';
+  document.getElementById('rewrite-result').value = '';
+  updateRewriteStats();
+}
+
+async function copyRewriteResult() {
+  const text = document.getElementById('rewrite-result').value;
+  if (text) {
+    await navigator.clipboard.writeText(text);
+    showToast('Rewritten text copied!');
+  }
+}
+
+async function generateRewrite() {
+  const originalText = document.getElementById('rewrite-original').value.trim();
+  if (!originalText) {
+    showToast('Please enter some text to rewrite');
+    return;
+  }
+
+  const mode = state.rewriteMode || 'natural';
+  const toneExample = document.getElementById('rewrite-tone-input').value.trim();
+  
+  if (mode === 'tone' && !toneExample) {
+    showToast('Please provide a tone example');
+    return;
+  }
+
+  document.getElementById('rewrite-result').style.display = 'none';
+  document.getElementById('rewrite-loading').style.display = 'flex';
+  document.getElementById('btn-generate-rewrite').disabled = true;
+
+  try {
+    const res = await fetch('/api/ai/rewrite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        original_text: originalText,
+        mode: mode,
+        tone_example: mode === 'tone' ? toneExample : null,
+        user_id: 'default'
+      })
+    });
+
+    if (!res.ok) throw new Error('Rewrite failed');
+    const data = await res.json();
+    
+    document.getElementById('rewrite-result').value = data.rewritten_text;
+  } catch (err) {
+    console.error(err);
+    showToast('Error generating rewrite.');
+  } finally {
+    document.getElementById('rewrite-loading').style.display = 'none';
+    document.getElementById('rewrite-result').style.display = 'block';
+    document.getElementById('btn-generate-rewrite').disabled = false;
+    updateRewriteStats();
+  }
+}
