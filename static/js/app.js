@@ -2996,6 +2996,13 @@ async function generateSynthesis() {
     
     const data = await res.json();
     resultDiv.innerHTML = marked.parse(data.content);
+    
+    // Update the title if available
+    const titleEl = document.getElementById('synthesis-generated-title');
+    if (titleEl && data.title) {
+      titleEl.textContent = data.title;
+    }
+    
     outputContainer.style.display = 'block';
     
     // Scroll to result

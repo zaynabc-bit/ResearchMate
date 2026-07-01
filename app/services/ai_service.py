@@ -748,6 +748,7 @@ INSTRUCTIONS:
 {custom_prompt if custom_prompt else "Synthesize the core findings, methodologies, and discussions from the sources into a comprehensive literature review."}
 
 RULES:
+- Start the document with a `# ` header containing an intelligent, synthetic title that accurately reflects the synthesized content.
 - Do NOT invent facts.
 - Use only the provided sources. If you cite something, it must be from the text below.
 - Ensure smooth transitions and logical flow.

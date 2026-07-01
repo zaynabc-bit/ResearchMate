@@ -53,10 +53,18 @@ async def generate_report(req: SynthesisRequest, db: AsyncSession = Depends(get_
         # 3. Call AI
         report_content = await generate_synthesis(combined_text, req.style, req.custom_prompt)
         
-        # 4. Save to DB
+        # 4. Extract synthetic title from the generated content
+        title = req.title
+        lines = report_content.split("\n")
+        for line in lines[:5]:
+            if line.startswith("# "):
+                title = line.replace("# ", "").strip()
+                break
+        
+        # 5. Save to DB
         report = SynthesisReport(
             user_id=user_id,
-            title=req.title,
+            title=title,
             content=report_content,
             style=req.style,
             custom_prompt=req.custom_prompt
