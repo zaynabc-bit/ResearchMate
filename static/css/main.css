@@ -733,6 +733,10 @@ body.unauthenticated .main-content {
   animation: fadeInUp 0.3s ease forwards;
 }
 
+.paper-card > * {
+  flex-shrink: 0;
+}
+
 .paper-card::before {
   content: '';
   position: absolute;
