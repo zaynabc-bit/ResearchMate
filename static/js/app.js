@@ -694,7 +694,7 @@ function navigateTo(view) {
     switchView('web-references');
   } else if (view === 'rewrite-studio') {
     switchView('rewrite-studio');
-    loadRewriteHistory();
+    loadRewriteSessions();
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
@@ -2745,28 +2745,13 @@ function setRewriteMode(mode) {
 function updateRewriteStats() {
   const orig = document.getElementById('rewrite-original').value;
   const origWords = orig.trim() ? orig.trim().split(/\s+/).length : 0;
-  document.getElementById('rewrite-orig-words').textContent = origWords + ' words';
-  document.getElementById('rewrite-orig-chars').textContent = orig.length + ' characters';
-
-  const res = document.getElementById('rewrite-result').value;
-  const resWords = res.trim() ? res.trim().split(/\s+/).length : 0;
-  document.getElementById('rewrite-res-words').textContent = resWords + ' words';
-  document.getElementById('rewrite-res-chars').textContent = res.length + ' characters';
-}
-
-function clearRewriteOriginal() {
-  document.getElementById('rewrite-original').value = '';
-  document.getElementById('rewrite-result').value = '';
-  updateRewriteStats();
-}
-
-async function copyRewriteResult() {
-  const text = document.getElementById('rewrite-result').value;
-  if (text) {
-    await navigator.clipboard.writeText(text);
-    showToast('Rewritten text copied!');
+  
+  const el = document.getElementById('rewrite-orig-words');
+  if (el) {
+    el.textContent = origWords;
   }
 }
+
 
 async function generateRewrite() {
   const originalText = document.getElementById('rewrite-original').value.trim();
@@ -2783,9 +2768,9 @@ async function generateRewrite() {
     return;
   }
 
-  document.getElementById('rewrite-result').style.display = 'none';
-  document.getElementById('rewrite-loading').style.display = 'flex';
-  document.getElementById('btn-generate-rewrite').disabled = true;
+  const btn = document.getElementById('btn-generate-rewrite');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>';
 
   try {
     const res = await fetch('/api/ai/rewrite', {
@@ -2795,56 +2780,83 @@ async function generateRewrite() {
         original_text: originalText,
         mode: mode,
         tone_example: mode === 'tone' ? toneExample : null,
-        user_id: 'default'
+        user_id: 'default',
+        session_id: state.currentRewriteSessionId
       })
     });
 
     if (!res.ok) throw new Error('Rewrite failed');
     const data = await res.json();
     
-    document.getElementById('rewrite-result').value = data.rewritten_text;
+    state.currentRewriteSessionId = data.session_id;
+    
+    if (data.is_new_session) {
+      loadRewriteSessions();
+      document.getElementById('rewrite-session-title').textContent = "Rewrite Session";
+      document.getElementById('btn-rename-rewrite').style.display = 'block';
+    }
+
+    // Hide empty state
+    const emptyState = document.getElementById('rewrite-empty-state');
+    if (emptyState) emptyState.style.display = 'none';
+    
+    // Append turn
+    const timeline = document.getElementById('rewrite-timeline');
+    timeline.innerHTML += renderRewriteTurn(data);
+    
+    // Clear input
+    document.getElementById('rewrite-original').value = '';
+    updateRewriteStats();
+    
+    // Scroll to bottom
+    timeline.scrollTo({ top: timeline.scrollHeight, behavior: 'smooth' });
+    
   } catch (err) {
     console.error(err);
     showToast('Error generating rewrite.');
   } finally {
-    document.getElementById('rewrite-loading').style.display = 'none';
-    document.getElementById('rewrite-result').style.display = 'block';
-    document.getElementById('btn-generate-rewrite').disabled = false;
-    updateRewriteStats();
-    loadRewriteHistory();
+    btn.disabled = false;
+    btn.innerHTML = '✨ Rewrite';
   }
 }
 
-let rewriteHistoryData = [];
+function renderRewriteTurn(turn) {
+  return `
+    <div style="background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+      <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--bg-2); display: flex; justify-content: space-between; align-items: flex-start;">
+        <div style="font-size: 14px; line-height: 1.5; color: var(--text-2); flex: 1; padding-right: 16px; white-space: pre-wrap;">${escHtml(turn.original_text)}</div>
+        <span class="badge" style="background: var(--bg-1); border: 1px solid var(--border);">${escHtml(turn.mode)}</span>
+      </div>
+      <div style="padding: 20px; font-size: 15px; line-height: 1.6; color: var(--text-1); white-space: pre-wrap; position: relative;">
+        ${escHtml(turn.rewritten_text)}
+        <button class="btn-icon" onclick="navigator.clipboard.writeText(this.parentElement.textContent.trim()); showToast('Copied!')" style="position: absolute; bottom: 12px; right: 16px; background: var(--bg-0); border: 1px solid var(--border);" title="Copy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+}
 
-async function loadRewriteHistory() {
+async function loadRewriteSessions() {
   try {
-    const res = await fetch('/api/ai/rewrite/history');
-    if (!res.ok) throw new Error('Failed to load history');
-    rewriteHistoryData = await res.json();
+    const res = await fetch('/api/ai/rewrite/sessions');
+    if (!res.ok) throw new Error('Failed to load sessions');
+    const sessions = await res.json();
     
-    const grid = document.getElementById('rewrite-history-grid');
-    if (rewriteHistoryData.length === 0) {
-      grid.innerHTML = '<p style="color: var(--text-3); font-size: 14px;">No saved rewrites yet. They will appear here automatically.</p>';
+    const list = document.getElementById('rewrite-sessions-list');
+    if (sessions.length === 0) {
+      list.innerHTML = '<p style="color: var(--text-3); font-size: 13px; padding: 8px;">No sessions yet.</p>';
       return;
     }
     
-    grid.innerHTML = rewriteHistoryData.map(item => `
-      <div class="card" style="cursor: pointer;" onclick="loadSavedRewrite('${item.id}')">
-        <div class="card-meta">
-          <span class="card-date">${formatDate(item.created_at)}</span>
-          <div class="card-badges">
-            <span class="badge" style="background: var(--bg-2); color: var(--text-1);">${escHtml(item.mode)}</span>
-          </div>
+    list.innerHTML = sessions.map(s => `
+      <div class="sidebar-item" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; cursor: pointer; border-radius: var(--radius-md); ${state.currentRewriteSessionId === s.id ? 'background: var(--bg-2);' : ''}" onclick="loadRewriteSession('${s.id}', '${escHtml(s.title)}')">
+        <div style="font-size: 13px; font-weight: 500; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">
+          ${escHtml(s.title)}
         </div>
-        <p style="font-size: 13px; color: var(--text-2); margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-          ${escHtml(item.rewritten_text)}
-        </p>
-        <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
-          <button class="btn-icon btn-danger" onclick="event.stopPropagation(); deleteSavedRewrite('${item.id}')" title="Delete">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          </button>
-        </div>
+        <button class="btn-icon" onclick="event.stopPropagation(); deleteRewriteSession('${s.id}')" style="opacity: 0.5; transform: scale(0.8);" title="Delete Session">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </div>
     `).join('');
   } catch (err) {
@@ -2852,27 +2864,87 @@ async function loadRewriteHistory() {
   }
 }
 
-function loadSavedRewrite(id) {
-  const item = rewriteHistoryData.find(r => r.id === id);
-  if (!item) return;
+async function loadRewriteSession(id, title) {
+  state.currentRewriteSessionId = id;
+  document.getElementById('rewrite-session-title').textContent = title;
+  document.getElementById('btn-rename-rewrite').style.display = 'block';
   
-  document.getElementById('rewrite-original').value = item.original_text;
-  document.getElementById('rewrite-result').value = item.rewritten_text;
-  setRewriteMode(item.mode);
-  updateRewriteStats();
-  
-  // Scroll up to the editors
-  document.getElementById('view-rewrite-studio').scrollTo({ top: 0, behavior: 'smooth' });
-}
+  // Highlight active session
+  loadRewriteSessions();
 
-async function deleteSavedRewrite(id) {
-  if (!confirm('Are you sure you want to delete this saved rewrite?')) return;
   try {
-    const res = await fetch(`/api/ai/rewrite/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete');
-    loadRewriteHistory();
+    const res = await fetch(`/api/ai/rewrite/session/${id}/turns`);
+    if (!res.ok) throw new Error('Failed to load turns');
+    const turns = await res.json();
+    
+    const timeline = document.getElementById('rewrite-timeline');
+    if (turns.length === 0) {
+      timeline.innerHTML = '<p style="text-align: center; color: var(--text-3); margin-top: 40px;">No rewrites found in this session.</p>';
+      return;
+    }
+    
+    timeline.innerHTML = turns.map(t => renderRewriteTurn(t)).join('');
+    timeline.scrollTo({ top: timeline.scrollHeight, behavior: 'instant' });
   } catch (err) {
     console.error(err);
-    showToast('Failed to delete saved rewrite');
+  }
+}
+
+function createNewRewriteSession() {
+  state.currentRewriteSessionId = null;
+  document.getElementById('rewrite-session-title').textContent = 'New Rewrite Session';
+  document.getElementById('btn-rename-rewrite').style.display = 'none';
+  
+  const timeline = document.getElementById('rewrite-timeline');
+  timeline.innerHTML = `
+    <div id="rewrite-empty-state" style="text-align: center; color: var(--text-3); margin-top: 60px;">
+      <div style="width: 48px; height: 48px; border-radius: 24px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--primary);">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </div>
+      <h3 style="font-size: 16px; font-weight: 500; color: var(--text-1); margin-bottom: 8px;">Welcome to Rewrite Studio</h3>
+      <p style="font-size: 14px; max-width: 300px; margin: 0 auto; line-height: 1.5;">Select a mode and paste your text below to begin a new rewrite session.</p>
+    </div>
+  `;
+  document.getElementById('rewrite-original').value = '';
+  updateRewriteStats();
+  
+  loadRewriteSessions(); // Update highlight
+}
+
+async function renameRewriteSession() {
+  if (!state.currentRewriteSessionId) return;
+  const currentTitle = document.getElementById('rewrite-session-title').textContent;
+  const newTitle = prompt('Enter a new name for this session:', currentTitle);
+  if (!newTitle || newTitle === currentTitle) return;
+  
+  try {
+    const res = await fetch(`/api/ai/rewrite/session/${state.currentRewriteSessionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: newTitle })
+    });
+    if (!res.ok) throw new Error('Failed to rename');
+    document.getElementById('rewrite-session-title').textContent = newTitle;
+    loadRewriteSessions();
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to rename session');
+  }
+}
+
+async function deleteRewriteSession(id) {
+  if (!confirm('Are you sure you want to delete this session? This cannot be undone.')) return;
+  try {
+    const res = await fetch(`/api/ai/rewrite/session/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete');
+    
+    if (state.currentRewriteSessionId === id) {
+      createNewRewriteSession();
+    } else {
+      loadRewriteSessions();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to delete session');
   }
 }
