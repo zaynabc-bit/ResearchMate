@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./researchmate.db")
+DATABASE_URL = "sqlite+aiosqlite:///./researchmate.db"
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 
