@@ -1534,7 +1534,7 @@ function switchView(view) {
 
   const target = document.getElementById('view-' + view);
   if (target) {
-    if (view === 'home' || view === 'settings' || view === 'comparisons' || view === 'web-references' || view === 'rewrite-studio') {
+    if (view === 'home' || view === 'settings' || view === 'comparisons' || view === 'web-references') {
       target.style.display = 'block';
     } else {
       target.style.display = 'flex';
