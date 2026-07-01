@@ -165,6 +165,8 @@ body {
   padding: 4px;
   border-radius: var(--radius-sm);
   transition: background 0.2s;
+  border: none !important;
+  outline: none !important;
 }
 
 .logo:hover {
@@ -177,6 +179,8 @@ body {
   border-radius: 12px;
   object-fit: contain;
   box-shadow: none;
+  border: none !important;
+  outline: none !important;
 }
 
 .home-badge-logo {
@@ -194,6 +198,8 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  border: none !important;
+  outline: none !important;
 }
 
 .sidebar-nav {
@@ -500,6 +506,8 @@ body.unauthenticated .main-content {
   width: 64px;
   height: 64px;
   border-radius: 16px;
+  border: none !important;
+  outline: none !important;
 }
 
 .auth-logo h2 {
