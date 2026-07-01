@@ -2,6 +2,25 @@
    ResearchMate — Frontend Application Logic
    ============================================ */
 
+// Intercept fetch to support custom Backend API URL (for hosting on GitHub Pages)
+const originalFetch = window.fetch;
+window.fetch = function(input, init) {
+  let url = typeof input === 'string' ? input : input.url;
+  const backendUrl = localStorage.getItem('rm_backend_url') || '';
+  
+  if (url.startsWith('/api/') && backendUrl) {
+    const baseUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+    url = baseUrl + url;
+    
+    if (typeof input === 'string') {
+      input = url;
+    } else {
+      input = new Request(url, input);
+    }
+  }
+  return originalFetch(input, init);
+};
+
 // ---- State ----
 const state = {
   papers: [],
@@ -75,6 +94,7 @@ function saveSettings() {
   const oKey = document.getElementById('key-openai').value.trim();
   const gKey = document.getElementById('key-gemini').value.trim();
   const dKey = document.getElementById('key-deepseek').value.trim();
+  const bUrl = document.getElementById('backend-url').value.trim();
 
   state.keys.openai = oKey;
   state.keys.gemini = gKey;
@@ -87,6 +107,7 @@ function saveSettings() {
   localStorage.setItem('key-openai', oKey);
   localStorage.setItem('key-gemini', gKey);
   localStorage.setItem('key-deepseek', dKey);
+  localStorage.setItem('rm_backend_url', bUrl);
   
   localStorage.setItem('enable-openai', state.enabledCloud.openai);
   localStorage.setItem('enable-gemini', state.enabledCloud.gemini);
@@ -401,6 +422,7 @@ function navigateTo(view) {
     document.getElementById('key-openai').value = state.keys.openai || '';
     document.getElementById('key-gemini').value = state.keys.gemini || '';
     document.getElementById('key-deepseek').value = state.keys.deepseek || '';
+    document.getElementById('backend-url').value = localStorage.getItem('rm_backend_url') || '';
     const eO = document.getElementById('enable-openai'); if(eO) eO.checked = state.enabledCloud.openai;
     const eG = document.getElementById('enable-gemini'); if(eG) eG.checked = state.enabledCloud.gemini;
     const eD = document.getElementById('enable-deepseek'); if(eD) eD.checked = state.enabledCloud.deepseek;
