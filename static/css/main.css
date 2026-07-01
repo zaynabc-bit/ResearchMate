@@ -1475,11 +1475,9 @@ body.unauthenticated .main-content {
   transition: all 0.15s;
 }
 .colour-swatch:hover, .colour-swatch.selected { 
-  transform: scale(1.6); 
-  outline: 3px solid var(--primary);
-  outline-offset: 3px;
-  border-color: transparent;
+  transform: scale(2);
   z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
 /* Move folder list */
