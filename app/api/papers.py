@@ -294,6 +294,62 @@ async def delete_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_i
     await db.commit()
     return {"message": "Paper deleted"}
 
+@router.get("/references/search")
+async def search_web_references(q: str):
+    import urllib.request
+    import urllib.parse
+    import json
+    import re
+    
+    if not q:
+        return []
+
+    # Clean up query slightly
+    search_query = re.sub(r'[^\w\s]', '', q)
+    safe_query = urllib.parse.quote(search_query)
+    url = f"https://api.crossref.org/works?query={safe_query}&select=title,author,URL,abstract,published-print&rows=10"
+    
+    try:
+        req = urllib.request.Request(url, headers={'User-Agent': 'ResearchMate/1.0 (mailto:admin@example.com)'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read())
+            items = data.get("message", {}).get("items", [])
+            
+            references = []
+            for item in items:
+                authors = []
+                for a in item.get("author", []):
+                    if "family" in a:
+                        authors.append(f"{a.get('given', '')} {a['family']}".strip())
+                author_str = ", ".join(authors) if authors else "Unknown Authors"
+                
+                year = ""
+                try:
+                    year = str(item.get("published-print", {}).get("date-parts", [[None]])[0][0])
+                except:
+                    pass
+                
+                title = item.get("title", ["Unknown Title"])[0]
+                url_val = item.get("URL", "")
+                abstract = item.get("abstract", "")
+                
+                if abstract:
+                    abstract = re.sub(r'<[^>]+>', '', abstract)
+                    if abstract.startswith('jats:p'):
+                        abstract = abstract[6:]
+                
+                references.append({
+                    "title": title,
+                    "authors": author_str,
+                    "year": year,
+                    "url": url_val,
+                    "abstract": abstract
+                })
+            return references
+    except Exception as e:
+        print(f"CrossRef API Error: {e}")
+        return []
+
 @router.get("/{paper_id}/references")
 async def get_paper_references(
     paper_id: str,

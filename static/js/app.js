@@ -2654,3 +2654,56 @@ async function fetchWebReferences() {
     showToast(err.message, 'error');
   }
 }
+
+async function searchGlobalWebReferences() {
+  const inputEl = document.getElementById('global-references-input');
+  const query = inputEl.value.trim();
+  if (!query) return;
+
+  const loading = document.getElementById('global-references-loading');
+  const content = document.getElementById('global-references-content');
+  
+  loading.style.display = 'flex';
+  content.style.display = 'none';
+
+  try {
+    const res = await fetch(`/api/references/search?q=${encodeURIComponent(query)}`);
+    if (!res.ok) throw new Error('Failed to fetch web references');
+    
+    const references = await res.json();
+    loading.style.display = 'none';
+    content.style.display = 'block';
+
+    if (!references || references.length === 0) {
+      content.innerHTML = `<div class="empty-state" style="padding: 40px; text-align: center; color: var(--text-2);">
+        <div style="font-size: 32px; margin-bottom: 16px;">🔍</div>
+        <p>No results found for "${escHtml(query)}".</p>
+      </div>`;
+      return;
+    }
+
+    content.innerHTML = references.map((ref, i) => `
+      <div class="reference-card" style="background: var(--bg-1); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; animation: slideUp 0.3s ease-out ${i * 0.1}s both;">
+        <h3 style="font-size: 16px; margin-bottom: 8px; color: var(--primary);">
+          <a href="${ref.url}" target="_blank" style="color: inherit; text-decoration: none;">${escHtml(ref.title)}</a>
+        </h3>
+        <div style="font-size: 13px; color: var(--text-2); margin-bottom: 12px;">
+          <span style="font-weight: 500;">${escHtml(ref.authors)}</span>
+          ${ref.year ? ` • <span>${escHtml(ref.year)}</span>` : ''}
+        </div>
+        ${ref.abstract ? `<p style="font-size: 14px; color: var(--text); line-height: 1.5;">${escHtml(ref.abstract.substring(0, 300))}${ref.abstract.length > 300 ? '...' : ''}</p>` : ''}
+        <div style="margin-top: 16px;">
+          <a href="${ref.url}" target="_blank" class="btn-outline" style="font-size: 12px; padding: 6px 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            View Full Paper
+          </a>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    loading.style.display = 'none';
+    showToast(err.message, 'error');
+  }
+}
+
