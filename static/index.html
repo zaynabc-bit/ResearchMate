@@ -85,6 +85,10 @@
           </svg>
           Rewrite Studio
         </button>
+        <button class="nav-item" id="nav-synthesis-studio" onclick="navigateTo('synthesis-studio')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Synthesis Studio
+        </button>
         <button class="nav-item" id="nav-settings" onclick="navigateTo('settings')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
           Settings
@@ -437,6 +441,84 @@
             <div style="font-size: 32px; margin-bottom: 16px;">🔍</div>
             <p>Enter a topic to find academic references.</p>
           </div>
+        </div>
+      </div>
+
+      <!-- SYNTHESIS STUDIO VIEW -->
+      <div id="view-synthesis-studio" class="view" style="display:none; padding: 32px; max-width: 800px; margin: 0 auto; width: 100%; overflow-y: auto;">
+        <h1 class="view-title" style="margin-bottom: 8px;">Synthesis Studio</h1>
+        <p style="font-size: 14px; color: var(--text-2); margin-bottom: 32px;">Combine multiple sources into a single, cohesive academic document.</p>
+        
+        <!-- Source Selection -->
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">1. Select Sources</h3>
+          <div style="display: flex; flex-direction: column; gap: 12px; background: var(--surface); padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md);">
+            <div>
+              <label style="font-size: 13px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 8px;">From Library</label>
+              <div id="synthesis-library-papers" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 8px;">
+                <!-- Populated via JS -->
+              </div>
+            </div>
+            <div style="border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+              <label style="font-size: 13px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 8px;">Manual Input (Optional)</label>
+              <textarea id="synthesis-manual-text" class="text-input" placeholder="Paste any additional text or notes here..." style="min-height: 100px; resize: vertical;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formatting & Instructions -->
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: var(--text);">2. Instructions</h3>
+          <div style="display: flex; flex-direction: column; gap: 16px; background: var(--surface); padding: 16px; border: 1px solid var(--border); border-radius: var(--radius-md);">
+            <div>
+              <label style="font-size: 13px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 8px;">Formatting Style</label>
+              <select id="synthesis-format-style" class="text-input" style="cursor: pointer;">
+                <option value="APA 7">APA 7 (American Psychological Association 7th edition)</option>
+                <option value="Harvard">Harvard</option>
+                <option value="AMA">AMA (American Medical Association)</option>
+                <option value="ACS">American Chemical Society</option>
+                <option value="APA 6">APA 6 (American Psychological Association 6th edition)</option>
+                <option value="Chicago (author-date)">Chicago Manual of Style 18th edition (author-date)</option>
+                <option value="Chicago (full note)">Chicago Manual of Style 18th edition (full note)</option>
+                <option value="CSE">Council of Science Editors, Name-Year</option>
+                <option value="Harvard (Australia)">Harvard (Australia style)</option>
+                <option value="IEEE">IEEE</option>
+                <option value="MHRA">MHRA (Modern Humanities Research Association)</option>
+                <option value="MLA 8">MLA 8</option>
+                <option value="MLA 9">MLA 9</option>
+                <option value="OSCOLA">OSCOLA</option>
+                <option value="Vancouver">Vancouver</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 13px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 8px;">Custom Prompt (Optional)</label>
+              <textarea id="synthesis-custom-prompt" class="text-input" placeholder="e.g. Write a literature review focusing on the differences between these methodologies..." style="min-height: 80px; resize: vertical;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action -->
+        <div style="margin-bottom: 32px; text-align: right;">
+          <button id="btn-generate-synthesis" class="btn-primary" onclick="generateSynthesis()" style="padding: 12px 24px; font-size: 15px; border-radius: var(--radius-full);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Generate Document
+          </button>
+        </div>
+
+        <!-- Output -->
+        <div id="synthesis-loading" class="summary-generating" style="display:none;">
+          <div class="spinner"></div>
+          <p>Synthesizing your document. This may take a minute...</p>
+        </div>
+        
+        <div id="synthesis-output-container" style="display: none; background: var(--surface); padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-md);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);">
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--text);">Generated Document</h3>
+            <button class="btn-outline" onclick="copySynthesis()" style="font-size: 13px; padding: 6px 12px;">
+              Copy Text
+            </button>
+          </div>
+          <div id="synthesis-result" class="markdown-body" style="font-size: 14px; line-height: 1.6; color: var(--text);"></div>
         </div>
       </div>
 

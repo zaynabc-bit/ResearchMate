@@ -728,12 +728,51 @@ CRITICAL RULES:
     
     url = f"{OLLAMA_URL}/api/chat"
     try:
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            resp = await client.post(url, json=payload)
-            if resp.status_code == 200:
-                data = resp.json()
-                return data.get("message", {}).get("content", "").strip()
-            else:
-                return "Error: Could not process rewrite request."
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(url, json=payload, timeout=60.0)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["message"]["content"].strip()
     except Exception as e:
-        return f"Error connecting to local AI: {str(e)}"
+        print(f"Ollama rewrite error: {e}")
+        raise
+
+async def generate_synthesis(combined_text: str, style: str, custom_prompt: str) -> str:
+    system_prompt = f"""You are an expert academic writer and researcher.
+Your task is to synthesize the provided source materials into a single, cohesive, well-structured, and highly technical document.
+
+FORMATTING REQUIRED: {style}
+You must strictly adhere to the {style} formatting style for both structure and citations.
+
+INSTRUCTIONS:
+{custom_prompt if custom_prompt else "Synthesize the core findings, methodologies, and discussions from the sources into a comprehensive literature review."}
+
+RULES:
+- Do NOT invent facts.
+- Use only the provided sources. If you cite something, it must be from the text below.
+- Ensure smooth transitions and logical flow.
+- Format the output using markdown.
+- Include a references section at the end if citations are used.
+"""
+
+    payload = {
+        "model": SMART_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"SOURCE MATERIALS:\n\n{combined_text}"}
+        ],
+        "stream": False,
+        "options": {"temperature": 0.4}
+    }
+    
+    url = f"{OLLAMA_URL}/api/chat"
+    try:
+        async with httpx.AsyncClient() as client:
+            # allow longer timeout for synthesis
+            resp = await client.post(url, json=payload, timeout=180.0)
+            resp.raise_for_status()
+            data = resp.json()
+            return data["message"]["content"].strip()
+    except Exception as e:
+        print(f"Ollama synthesis error: {e}")
+        raise

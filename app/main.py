@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.database import init_db
-from app.api import papers, folders, ai, comparisons
+from app.api import papers, folders, ai, comparisons, synthesis
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -42,6 +42,7 @@ app.include_router(papers.router, prefix="/api/papers", tags=["Papers"])
 app.include_router(folders.router, prefix="/api/folders", tags=["Folders"])
 app.include_router(ai.router, prefix="/api/ai", tags=["AI"])
 app.include_router(comparisons.router, prefix="/api/comparisons", tags=["Comparisons"])
+app.include_router(synthesis.router, prefix="/api/synthesis", tags=["Synthesis"])
 
 
 # Serve uploaded files (including nested paths like slides/{paper_id}/{img})

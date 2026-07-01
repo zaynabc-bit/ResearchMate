@@ -674,6 +674,11 @@ function navigateTo(view) {
     rewriteNav.classList.toggle('active', view === 'rewrite-studio');
   }
 
+  const synthNav = document.getElementById('nav-synthesis-studio');
+  if (synthNav) {
+    synthNav.classList.toggle('active', view === 'synthesis-studio');
+  }
+
   if (view === 'home') {
     switchView('home');
     updateHomeDashboard();
@@ -696,6 +701,9 @@ function navigateTo(view) {
   } else if (view === 'rewrite-studio') {
     switchView('rewrite-studio');
     loadRewriteHistory();
+  } else if (view === 'synthesis-studio') {
+    switchView('synthesis-studio');
+    loadSynthesisLibraryPapers();
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
@@ -2909,4 +2917,106 @@ async function deleteSavedRewrite(id) {
     console.error(err);
     showToast('Failed to delete saved rewrite');
   }
+}
+
+// ============================================
+// SYNTHESIS STUDIO
+// ============================================
+
+async function loadSynthesisLibraryPapers() {
+  if (!session) return;
+  try {
+    const res = await fetch('/api/papers');
+    if (!res.ok) throw new Error('Failed to fetch library');
+    const papers = await res.json();
+    
+    const container = document.getElementById('synthesis-library-papers');
+    if (!papers || papers.length === 0) {
+      container.innerHTML = '<p style="color: var(--text-3); font-size: 13px;">No papers in your library yet.</p>';
+      return;
+    }
+    
+    container.innerHTML = papers.map(p => `
+      <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='var(--bg-1)'" onmouseout="this.style.background='transparent'">
+        <input type="checkbox" class="synthesis-paper-checkbox" value="${p.id}" style="margin-top: 4px;" />
+        <div style="flex: 1;">
+          <div style="font-size: 13px; font-weight: 500; color: var(--text);">${escHtml(p.title)}</div>
+          ${p.authors ? `<div style="font-size: 12px; color: var(--text-2);">${escHtml(p.authors)}</div>` : ''}
+        </div>
+      </label>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('synthesis-library-papers').innerHTML = '<p style="color: #ef4444; font-size: 13px;">Failed to load library.</p>';
+  }
+}
+
+async function generateSynthesis() {
+  if (!session) return openAuthModal('login');
+  
+  // Collect selected papers
+  const checkboxes = document.querySelectorAll('.synthesis-paper-checkbox:checked');
+  const paper_ids = Array.from(checkboxes).map(cb => cb.value);
+  
+  const manual_text = document.getElementById('synthesis-manual-text').value.trim();
+  const style = document.getElementById('synthesis-format-style').value;
+  const custom_prompt = document.getElementById('synthesis-custom-prompt').value.trim();
+  
+  if (paper_ids.length === 0 && !manual_text) {
+    return showToast("Please select at least one paper or provide manual input.", "warning");
+  }
+  
+  const btn = document.getElementById('btn-generate-synthesis');
+  const loading = document.getElementById('synthesis-loading');
+  const outputContainer = document.getElementById('synthesis-output-container');
+  const resultDiv = document.getElementById('synthesis-result');
+  
+  btn.disabled = true;
+  loading.style.display = 'flex';
+  outputContainer.style.display = 'none';
+  resultDiv.innerHTML = '';
+  
+  try {
+    const res = await fetch('/api/synthesis/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: "Synthesized Document",
+        paper_ids: paper_ids,
+        manual_text: manual_text,
+        style: style,
+        custom_prompt: custom_prompt
+      })
+    });
+    
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.detail || 'Failed to generate document');
+    }
+    
+    const data = await res.json();
+    resultDiv.innerHTML = marked.parse(data.content);
+    outputContainer.style.display = 'block';
+    
+    // Scroll to result
+    outputContainer.scrollIntoView({ behavior: 'smooth' });
+    
+  } catch (err) {
+    console.error(err);
+    showToast(err.message, "error");
+  } finally {
+    btn.disabled = false;
+    loading.style.display = 'none';
+  }
+}
+
+function copySynthesis() {
+  const resultDiv = document.getElementById('synthesis-result');
+  if (!resultDiv) return;
+  const text = resultDiv.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    showToast("Copied to clipboard!", "success");
+  }).catch(() => {
+    showToast("Failed to copy", "error");
+  });
 }
