@@ -126,9 +126,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedMode = localStorage.getItem('aiMode') || 'fast';
   setMode(savedMode);
 
-  await Promise.all([loadFolders(), loadPapers()]);
-  updateFoldersUI();
-  updateSidebarFolders();
+  checkAIStatus();
+  renderColourSwatches();
+  await loadFolders();
+  await loadPapers();
   updateHomeDashboard();
 });
 
@@ -342,12 +343,6 @@ function toggleTheme() {
     root.classList.remove('theme-transitioning');
   }, 400);
 }
-
-// ---- Initialise (non-auth stuff) ----
-document.addEventListener('DOMContentLoaded', async () => {
-  checkAIStatus();
-  renderColourSwatches();
-});
 
 
 // ============================================
@@ -1475,7 +1470,7 @@ function updateAIBadge() {
 // ============================================
 function switchView(view) {
   // All possible view IDs
-  const allViews = ['view-auth', 'view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active'];
+  const allViews = ['view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active'];
   allViews.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';

@@ -5,30 +5,41 @@ import httpx
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
+# Anonymous user ID used when no token is provided (local-first mode)
+ANONYMOUS_USER_ID = "local-user"
+
 async def get_current_user_id(authorization: str = Header(None)) -> str:
-    """FastAPI dependency to verify Supabase JWT and return the user ID using httpx."""
-    if not SUPABASE_URL:
-        # Fallback for local dev if supabase not configured
-        return "local-dev-user-id"
-        
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-        
-    token = authorization.split(" ")[1]
+    """FastAPI dependency to verify Supabase JWT and return the user ID.
     
+    Falls back to a local anonymous user if:
+    - No authorization header is provided (user not logged in)
+    - Supabase is not configured
+    """
+    # If no auth header — user is browsing without logging in.
+    # Return a stable anonymous local user so the app still works.
+    if not authorization or not authorization.startswith("Bearer "):
+        return ANONYMOUS_USER_ID
+
+    # If Supabase not configured, skip verification
+    if not SUPABASE_URL:
+        return ANONYMOUS_USER_ID
+
+    token = authorization.split(" ")[1]
+
     try:
-        # Verify token by fetching the user via Supabase REST API
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{SUPABASE_URL}/auth/v1/user",
-                headers={"Authorization": f"Bearer {token}", "apikey": SUPABASE_KEY or ""}
+                headers={"Authorization": f"Bearer {token}", "apikey": SUPABASE_KEY or ""},
+                timeout=5.0
             )
-            
+
             if response.status_code != 200:
-                raise HTTPException(status_code=401, detail="Invalid token")
-                
+                # Token invalid — still allow as anonymous rather than blocking
+                return ANONYMOUS_USER_ID
+
             user_data = response.json()
-            return user_data.get("id")
+            return user_data.get("id") or ANONYMOUS_USER_ID
     except Exception as e:
-        print(f"Auth error: {e}")
-        raise HTTPException(status_code=401, detail="Could not validate credentials")
+        print(f"Auth check error (falling back to local): {e}")
+        return ANONYMOUS_USER_ID
