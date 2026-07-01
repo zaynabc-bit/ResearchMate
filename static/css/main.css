@@ -870,10 +870,7 @@ body.unauthenticated .main-content {
 .card-actions {
   display: flex;
   gap: 6px;
-  opacity: 0;
-  transition: opacity 0.2s;
 }
-.paper-card:hover .card-actions { opacity: 1; }
 
 .card-action-btn {
   display: flex;
