@@ -105,25 +105,21 @@ window.addEventListener('DOMContentLoaded', async () => {
       if (data && data.session) {
         session = data.session;
         document.body.classList.remove('unauthenticated');
-        document.getElementById('view-auth').classList.remove('active');
-        document.getElementById('view-home').classList.add('active');
+        switchView('home');
+        updateHomeDashboard();
       } else {
         document.body.classList.add('unauthenticated');
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById('view-auth').classList.add('active');
+        switchView('auth');
       }
     } catch (err) {
       console.error("Auth check failed:", err);
       document.body.classList.add('unauthenticated');
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById('view-auth').classList.add('active');
+      switchView('auth');
     }
   } else {
-    // If Supabase is blocked (e.g. adblock), fallback to local dev mode automatically
     console.warn("Supabase unavailable. Falling back to local mode.");
     document.body.classList.add('unauthenticated');
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-auth').classList.add('active');
+    switchView('auth');
     const errorMsg = document.getElementById('auth-error-msg');
     if (errorMsg) {
       errorMsg.textContent = "Vault offline. Check connection or ad-blocker.";
@@ -144,11 +140,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   setMode(savedMode);
 
   if (session) {
-    fetchFolders().then(() => {
-      updateFoldersUI();
-      updateSidebarFolders();
-    });
-    fetchPapers().then(renderPapers);
+    await Promise.all([loadFolders(), loadPapers()]);
+    updateFoldersUI();
+    updateSidebarFolders();
   }
 });
 
@@ -185,8 +179,7 @@ async function handleAuth(type) {
     if (result.error) throw result.error;
     
     session = result.data.session;
-    document.getElementById('view-auth').classList.remove('active');
-    document.getElementById('view-home').classList.add('active');
+    switchView('home');
     
     // Load user data
     document.body.classList.remove('unauthenticated');
@@ -195,6 +188,7 @@ async function handleAuth(type) {
       updateSidebarFolders();
     });
     fetchPapers().then(renderPapers);
+    updateHomeDashboard();
     
     showToast(`Welcome to your vault, @${handle}!`);
   } catch (err) {
@@ -211,8 +205,7 @@ async function logout() {
   }
   session = null;
   document.body.classList.add('unauthenticated');
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.getElementById('view-auth').classList.add('active');
+  switchView('auth');
   state.papers = [];
   state.folders = [];
 }
@@ -280,13 +273,12 @@ function toggleTheme() {
   }, 400);
 }
 
-// ---- Initialise ----
+// ---- Initialise (non-auth stuff) ----
 document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([loadFolders(), loadPapers()]);
   checkAIStatus();
   renderColourSwatches();
-  navigateTo('home');
 });
+
 
 // ============================================
 // FOLDERS
@@ -1412,24 +1404,20 @@ function updateAIBadge() {
 // VIEW SWITCHING
 // ============================================
 function switchView(view) {
-  document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
-  document.getElementById('view-library').style.display = view === 'library' ? 'flex' : 'none';
-  document.getElementById('view-detail').style.display = view === 'detail' ? 'flex' : 'none';
-  document.getElementById('view-global-chat').style.display = view === 'global-chat' ? 'flex' : 'none';
-  
-  const viewSettings = document.getElementById('view-settings');
-  if (viewSettings) {
-    viewSettings.style.display = view === 'settings' ? 'block' : 'none';
-  }
+  // All possible view IDs
+  const allViews = ['view-auth', 'view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active'];
+  allViews.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
 
-  const viewComparisons = document.getElementById('view-comparisons');
-  if (viewComparisons) {
-    viewComparisons.style.display = view === 'comparisons' ? 'block' : 'none';
-  }
-
-  const viewComparisonActive = document.getElementById('view-comparison-active');
-  if (viewComparisonActive) {
-    viewComparisonActive.style.display = view === 'comparison-active' ? 'flex' : 'none';
+  const target = document.getElementById('view-' + view);
+  if (target) {
+    if (view === 'home' || view === 'settings' || view === 'comparisons') {
+      target.style.display = 'block';
+    } else {
+      target.style.display = 'flex';
+    }
   }
 }
 
