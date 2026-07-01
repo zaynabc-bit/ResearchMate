@@ -179,6 +179,7 @@ async def get_comparisons(
                 "title": c.title,
                 "paper_a_title": paper_a.title if paper_a else "Deleted Paper",
                 "paper_b_title": paper_b.title if paper_b else "Deleted Paper",
+                "is_favourite": getattr(c, "is_favourite", False),
                 "created_at": c.created_at
             })
         return output
@@ -215,6 +216,7 @@ async def get_comparison_detail(
         "paper_a_title": paper_a.title if paper_a else "Deleted Paper",
         "paper_b_title": paper_b.title if paper_b else "Deleted Paper",
         "comparison_data": data,
+        "is_favourite": getattr(c, "is_favourite", False),
         "created_at": c.created_at
     }
 
@@ -248,3 +250,18 @@ async def rename_comparison(
     c.title = request.title
     await db.commit()
     return {"status": "success", "title": c.title}
+
+@router.put("/{id}/favourite")
+async def toggle_comparison_favourite(
+    id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    res = await db.execute(select(PaperComparison).where(PaperComparison.id == id, PaperComparison.user_id == user_id))
+    c = res.scalar_one_or_none()
+    if not c:
+        raise HTTPException(status_code=404, detail="Comparison not found")
+    
+    c.is_favourite = not getattr(c, "is_favourite", False)
+    await db.commit()
+    return {"status": "success", "is_favourite": c.is_favourite}

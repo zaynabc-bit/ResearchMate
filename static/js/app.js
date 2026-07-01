@@ -2457,7 +2457,11 @@ function renderComparisonsList() {
         <div class="card-meta" style="margin-top:12px;">
           <span class="card-date">${formatDate(c.created_at)}</span>
         </div>
-        <div class="card-footer" style="margin-top: 12px; justify-content: flex-end;">
+        <div class="card-footer" style="margin-top: 12px; justify-content: space-between;">
+          <button class="card-action-btn ${c.is_favourite ? 'card-action-fave-active' : ''}" onclick="event.stopPropagation(); toggleComparisonFavourite('${c.id}')" title="Favourite">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="${c.is_favourite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            ${c.is_favourite ? 'Favourited' : 'Favourite'}
+          </button>
           <button class="card-action-btn card-action-danger-btn" onclick="event.stopPropagation(); deleteComparisonById('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
             🗑 Delete
           </button>
@@ -2489,16 +2493,44 @@ function openSavedComparison(id) {
 }
 
 function deleteComparisonById(id, title) {
-  if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
+  if (!confirm(`Are you sure you want to delete the comparison "${title}"?`)) return;
 
   fetch(`/api/comparisons/${id}`, { method: 'DELETE' })
     .then(res => {
       if (!res.ok) throw new Error('Failed to delete comparison');
-      showToast('Comparison deleted.', 'success');
-      loadComparisons();
+      state.comparisons = state.comparisons.filter(c => c.id !== id);
+      if (state.activeComparison && state.activeComparison.id === id) {
+        state.activeComparison = null;
+        switchView('comparisons');
+      }
+      renderComparisonsList();
+      showToast('Comparison deleted', 'success');
     })
     .catch(err => {
       showToast(err.message, 'error');
+    });
+}
+
+function toggleComparisonFavourite(id) {
+  const comp = state.comparisons.find(c => c.id === id);
+  if (!comp) return;
+
+  const newState = !comp.is_favourite;
+  comp.is_favourite = newState;
+  renderComparisonsList(); // Optimistic update
+
+  fetch(`/api/comparisons/${id}/favourite`, { method: 'PUT' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        comp.is_favourite = data.is_favourite;
+        renderComparisonsList();
+      }
+    })
+    .catch(err => {
+      comp.is_favourite = !newState;
+      renderComparisonsList();
+      showToast('Failed to update favourite status', 'error');
     });
 }
 
