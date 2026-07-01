@@ -665,6 +665,11 @@ function navigateTo(view) {
     compNav.classList.toggle('active', view === 'comparisons');
   }
 
+  const webRefNav = document.getElementById('nav-web-references');
+  if (webRefNav) {
+    webRefNav.classList.toggle('active', view === 'web-references');
+  }
+
   if (view === 'home') {
     switchView('home');
     updateHomeDashboard();
@@ -681,6 +686,8 @@ function navigateTo(view) {
   } else if (view === 'comparisons') {
     switchView('comparisons');
     loadComparisons();
+  } else if (view === 'web-references') {
+    switchView('web-references');
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
