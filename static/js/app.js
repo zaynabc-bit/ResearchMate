@@ -134,6 +134,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Auth UI helpers
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return { text: 'Good morning', emoji: '☀️' };
+  if (hour >= 12 && hour < 17) return { text: 'Good afternoon', emoji: '🌤️' };
+  if (hour >= 17 && hour < 21) return { text: 'Good evening', emoji: '🌆' };
+  return { text: 'Good night', emoji: '🌙' };
+}
+
 function updateAuthUI(sess) {
   const handle = sess ? (sess.user.email || '').replace('@researchmate.app', '') : null;
   const displayName = sess ? (sess.user.user_metadata && sess.user.user_metadata.display_name) || handle : null;
@@ -142,6 +150,9 @@ function updateAuthUI(sess) {
   const logoutBtn = document.getElementById('btn-sidebar-logout');
   const userInfo = document.getElementById('auth-user-info');
   const handleDisplay = document.getElementById('auth-handle-display');
+  const greetingBar = document.getElementById('greeting-bar');
+  const greetingText = document.getElementById('greeting-text');
+  const greetingEmoji = document.getElementById('greeting-emoji');
 
   if (sess) {
     if (signUpBtn) signUpBtn.style.display = 'none';
@@ -149,11 +160,23 @@ function updateAuthUI(sess) {
     if (logoutBtn) logoutBtn.style.display = 'flex';
     if (userInfo) { userInfo.style.display = 'flex'; }
     if (handleDisplay) handleDisplay.textContent = displayName || ('@' + handle);
+
+    // Show greeting bar
+    if (greetingBar) {
+      const { text, emoji } = getGreeting();
+      const name = displayName || handle;
+      greetingBar.style.display = 'flex';
+      if (greetingText) greetingText.textContent = text + ', ' + name + '!';
+      if (greetingEmoji) greetingEmoji.textContent = emoji;
+    }
   } else {
     if (signUpBtn) signUpBtn.style.display = 'flex';
     if (loginBtn) loginBtn.style.display = 'flex';
     if (logoutBtn) logoutBtn.style.display = 'none';
     if (userInfo) userInfo.style.display = 'none';
+
+    // Hide greeting bar
+    if (greetingBar) greetingBar.style.display = 'none';
   }
 }
 
