@@ -1474,7 +1474,12 @@ body.unauthenticated .main-content {
   border: 2px solid transparent;
   transition: all 0.15s;
 }
-.colour-swatch:hover, .colour-swatch.selected { transform: scale(1.2); border-color: white; }
+.colour-swatch:hover, .colour-swatch.selected { 
+  transform: scale(1.2); 
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+  border-color: transparent;
+}
 
 /* Move folder list */
 .move-folder-list { display: flex; flex-direction: column; gap: 4px; }
