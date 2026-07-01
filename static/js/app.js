@@ -2328,25 +2328,39 @@ function exportComparisonText() {
     });
 }
 
-function openComparePicker() {
+async function openComparePicker() {
   const overlay = document.getElementById('compare-picker-overlay');
   const list = document.getElementById('compare-picker-list');
   overlay.style.display = 'flex';
+  list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px;">Loading papers...</p>';
 
-  if (!state.papers.length) {
-    list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px;">No papers in your library yet. Upload some first!</p>';
-    return;
+  // Reset button
+  const btn = document.getElementById('compare-picker-btn');
+  btn.disabled = true;
+  btn.style.opacity = '0.5';
+
+  try {
+    // Always fetch ALL papers regardless of current view filter
+    const res = await fetch('/api/papers?sort=created_at');
+    const allPapers = await res.json();
+
+    if (!allPapers.length) {
+      list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px;">No papers in your library yet. Upload some first!</p>';
+      return;
+    }
+
+    list.innerHTML = allPapers.map(p => `
+      <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:border-color 0.15s;">
+        <input type="checkbox" value="${p.id}" data-title="${escHtml(p.title || 'Untitled')}" onchange="updateComparePickerBtn()" style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;" />
+        <div style="min-width:0;">
+          <div style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(p.title || 'Untitled')}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${escHtml(p.authors || 'Unknown author')}</div>
+        </div>
+      </label>
+    `).join('');
+  } catch (e) {
+    list.innerHTML = '<p style="color:#ef4444;text-align:center;padding:24px;">Failed to load papers. Try again.</p>';
   }
-
-  list.innerHTML = state.papers.map(p => `
-    <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!this.querySelector('input').checked)this.style.borderColor='var(--border)'">
-      <input type="checkbox" value="${p.id}" onchange="updateComparePickerBtn()" style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;" />
-      <div style="min-width:0;">
-        <div style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(p.title || 'Untitled')}</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${escHtml(p.authors || 'Unknown author')}</div>
-      </div>
-    </label>
-  `).join('');
 }
 
 function closeComparePicker() {
@@ -2365,10 +2379,18 @@ async function runCompareFromPicker() {
   const checked = [...document.querySelectorAll('#compare-picker-list input[type=checkbox]:checked')];
   if (checked.length < 2) { showToast('Select at least 2 papers.', 'error'); return; }
   const ids = checked.map(c => c.value);
-  const selected = state.papers.filter(p => ids.includes(p.id));
   closeComparePicker();
-  state.selectedPaperIds = ids;
-  await runAIComparison(selected);
+
+  // Fetch fresh paper objects for the selected IDs
+  try {
+    const res = await fetch('/api/papers?sort=created_at');
+    const allPapers = await res.json();
+    const selected = allPapers.filter(p => ids.includes(p.id));
+    state.selectedPaperIds = ids;
+    await runAIComparison(selected);
+  } catch (e) {
+    showToast('Failed to start comparison. Try again.', 'error');
+  }
 }
 
 function loadComparisons() {
