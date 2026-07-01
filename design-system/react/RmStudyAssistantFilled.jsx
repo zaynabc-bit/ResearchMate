@@ -1,0 +1,9 @@
+import React from 'react';
+
+export const RmStudyAssistantFilled = ({ size = 24, color = 'currentColor', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+  <path d="M11 2a9 9 0 0 1 6.36 15.36L21 21a1 1 0 0 1-1.41 1.41l-3.64-3.64A9 9 0 1 1 11 2zm0 2a7 7 0 1 0 0 14 7 7 0 0 0 0-14z" />
+  <path d="M11 7L6.5 9.25v0.1l4.5 2.25 4.5-2.25v-0.1L11 7z" />
+  <path d="M8 11v1.5c0 1 1.34 1.5 3 1.5s3-.5 3-1.5V11l-3 1.5L8 11z" />
+</svg>
+);

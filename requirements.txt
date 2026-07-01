@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+aiosqlite
+greenlet
+pdfplumber
+pymupdf
+pyobjc-framework-Vision
+python-multipart
+openai
+httpx
+aiofiles
+python-dotenv
+python-docx
+python-pptx
+openpyxl

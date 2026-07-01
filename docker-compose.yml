@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: researchmate
+    ports:
+      - "3001:3001"
+    volumes:
+      - .:/app
+    environment:
+      - APP_PORT=3001
+      - OLLAMA_URL=http://host.docker.internal:11434
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

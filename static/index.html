@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResearchMate — AI Academic Research Workspace</title>
+  <meta name="description" content="Import, summarise and chat with your academic research papers using local AI. Built for university students." />
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/main.css?v=18" />
+</head>
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-header-top">
+          <div class="logo" onclick="window.location.href='/'">
+            <img class="logo-img" src="/static/logo.jpg" alt="ResearchMate Logo" />
+            <span class="logo-text">ResearchMate</span>
+          </div>
+          <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle Day/Night Mode">
+            ☀️
+          </button>
+        </div>
+        <div class="sidebar-tagline">
+          <span class="tagline-line1">Designed for students.</span>
+          <span class="tagline-line2">Built by a student.</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" id="nav-home" onclick="navigateTo('home')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+          Home
+        </button>
+        <button class="nav-item" id="nav-all" onclick="navigateTo('all')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+          Library
+          <span class="nav-badge" id="badge-all">0</span>
+        </button>
+        <button class="nav-item" id="nav-favourites" onclick="navigateTo('favourites')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+          Favourites
+        </button>
+        <button class="nav-item" id="nav-global-chat" onclick="navigateTo('global-chat')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M9 7.5 C9 9.5, 8 10.5, 6 10.5 C8 10.5, 9 11.5, 9 13.5 C9 11.5, 10 10.5, 12 10.5 C10 10.5, 9 9.5, 9 7.5 Z" fill="currentColor" stroke="none" /><path d="M13.5 8.5 A 3 3 0 0 1 13.5 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" /><path d="M15.5 7 A 5 5 0 0 1 15.5 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6" /></svg>
+          AI Assistant
+        </button>
+        <button class="nav-item" id="nav-comparisons" onclick="navigateTo('comparisons')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M8.5 8 C8.5 9.5, 7.5 10.5, 6 10.5 C7.5 10.5, 8.5 11.5, 8.5 13 C8.5 11.5, 9.5 10.5, 11 10.5 C9.5 10.5, 8.5 9.5, 8.5 8 Z" fill="currentColor" stroke="none" /><path d="M13.5 8 C13.5 9.5, 12.5 10.5, 11 10.5 C12.5 10.5, 13.5 11.5, 13.5 13 C13.5 11.5, 14.5 10.5, 16 10.5 C14.5 10.5, 13.5 9.5, 13.5 8 Z" stroke="currentColor" stroke-width="1.5" fill="none" /></svg>
+          AI Compare
+        </button>
+        <button class="nav-item" id="nav-settings" onclick="navigateTo('settings')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+          Settings
+        </button>
+      </nav>
+
+      <div class="sidebar-section">
+        <div class="sidebar-section-header">
+          <span>Folders</span>
+          <button class="btn-icon" onclick="openNewFolderModal()" title="New folder">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div id="folder-list" class="folder-list">
+          <!-- Folders rendered here -->
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="ai-status" id="ai-status">
+          <span class="status-dot" id="status-dot"></span>
+          <span id="status-text">Checking AI...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- HOME / DASHBOARD VIEW -->
+      <div id="view-home" class="view active">
+        <div class="home-container">
+          <!-- Hero Section -->
+          <div class="home-hero-section">
+            <div class="home-hero-left">
+              <div class="home-logo-badge">
+                <img class="home-badge-logo" src="/static/logo.jpg" alt="ResearchMate" />
+                <span class="home-logo-text">ResearchMate</span>
+              </div>
+              <h1 class="home-hero-title">
+                Understand research.<br>
+                <span class="text-gradient">In minutes, not hours.</span>
+              </h1>
+              <p class="home-hero-subtitle">
+                AI-powered insights, privacy by design.<br>
+                Your research, organised and understood.
+              </p>
+              <div class="home-privacy-badge">
+                <span class="lock-icon">🔒</span>
+                <span>100% Local AI • Your data stays on your device</span>
+              </div>
+            </div>
+            
+            <div class="home-hero-right">
+              <!-- Feature Cards -->
+              <div class="home-feature-card" onclick="openImportModal()">
+                <div class="feature-icon-wrapper blue-bg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M11 7v7M8 11l3 3 3-3" stroke-width="1.5" /></svg>
+                </div>
+                <div class="feature-card-content">
+                  <h3>Import Papers</h3>
+                  <p>Add papers to your library</p>
+                </div>
+              </div>
+              
+              <div class="home-feature-card" onclick="navigateTo('all')">
+                <div class="feature-icon-wrapper purple-bg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><line x1="8" y1="8" x2="14" y2="8" stroke-width="1.5" /><line x1="8" y1="11" x2="14" y2="11" stroke-width="1.5" /><line x1="8" y1="14" x2="12" y2="14" stroke-width="1.5" /></svg>
+                </div>
+                <div class="feature-card-content">
+                  <h3>Smart Summary</h3>
+                  <p>Structured summaries & key insights</p>
+                </div>
+              </div>
+              
+              <div class="home-feature-card" onclick="navigateTo('global-chat')">
+                <div class="feature-icon-wrapper green-bg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M9 7.5 C9 9.5, 8 10.5, 6 10.5 C8 10.5, 9 11.5, 9 13.5 C9 11.5, 10 10.5, 12 10.5 C10 10.5, 9 9.5, 9 7.5 Z" fill="currentColor" stroke="none" /><path d="M13.5 8.5 A 3 3 0 0 1 13.5 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" /><path d="M15.5 7 A 5 5 0 0 1 15.5 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6" /></svg>
+                </div>
+                <div class="feature-card-content">
+                  <h3>AI Assistant</h3>
+                  <p>Get answers in plain English</p>
+                </div>
+              </div>
+              
+              <div class="home-feature-card" onclick="navigateTo('all')">
+                <div class="feature-icon-wrapper orange-bg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M11 7.5 C11 9.5, 10 10.5, 8 10.5 C10 10.5, 11 11.5, 11 13.5 C11 11.5, 12 10.5, 14 10.5 C12 10.5, 11 9.5, 11 7.5 Z" fill="currentColor" stroke="none" /></svg>
+                </div>
+                <div class="feature-card-content">
+                  <h3>Smart Search</h3>
+                  <p>Folders, notes & smart filters</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Library Mockup / Dashboard Stats & Recent Papers -->
+          <div class="home-dashboard-section">
+            <h2 class="home-section-title">Your Research Workspace</h2>
+            
+            <div class="home-dashboard-grid">
+              <!-- Left side: Quick Stats -->
+              <div class="home-stats-panel">
+                <div class="stat-item">
+                  <div class="stat-number" id="home-stat-total">0</div>
+                  <div class="stat-label">Total Papers</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number" id="home-stat-folders">0</div>
+                  <div class="stat-label">Folders</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number" id="home-stat-favourites">0</div>
+                  <div class="stat-label">Favourites</div>
+                </div>
+              </div>
+              
+              <!-- Right side: Recent Papers List -->
+              <div class="home-recent-papers-panel">
+                <h3>Recently Accessed Papers</h3>
+                <div class="recent-papers-list" id="home-recent-papers-list">
+                  <div class="no-recent-papers">No papers available. Click "Import Paper" to get started.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature Highlights Footer Bar -->
+          <div class="home-features-footer">
+            <div class="highlight-item">
+              <div class="highlight-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div class="highlight-text">
+                <h4>Privacy First</h4>
+                <p>100% local AI processing. Your research stays private.</p>
+              </div>
+            </div>
+            
+            <div class="highlight-item">
+              <div class="highlight-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              </div>
+              <div class="highlight-text">
+                <h4>Save Time</h4>
+                <p>Turn hours of reading into minutes of understanding.</p>
+              </div>
+            </div>
+            
+            <div class="highlight-item">
+              <div class="highlight-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.88A2.5 2.5 0 0 1 9.5 2zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.88A2.5 2.5 0 0 0 14.5 2z"/></svg>
+              </div>
+              <div class="highlight-text">
+                <h4>Study Smarter</h4>
+                <p>Focus on critical thinking, not searching for information.</p>
+              </div>
+            </div>
+            
+            <div class="highlight-item">
+              <div class="highlight-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+              </div>
+              <div class="highlight-text">
+                <h4>Built for Students</h4>
+                <p>Designed for undergraduate, postgraduate & dissertation work.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIBRARY VIEW -->
+      <div id="view-library" class="view">
+        <div class="topbar">
+          <div class="topbar-left">
+            <h1 class="page-title" id="page-title">All Papers</h1>
+          </div>
+          <div class="topbar-center">
+            <div class="search-wrapper">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" x2="21" y1="16" y2="21" /><path d="M11 7.5 C11 9.5, 10 10.5, 8 10.5 C10 10.5, 11 11.5, 11 13.5 C11 11.5, 12 10.5, 14 10.5 C12 10.5, 11 9.5, 11 7.5 Z" fill="currentColor" stroke="none" /></svg>
+              <input type="text" id="search-input" class="search-input" placeholder="Smart Search papers, authors, keywords..." oninput="handleSearch(this.value)" />
+              <button class="search-clear" id="search-clear" onclick="clearSearch()" style="display:none">✕</button>
+            </div>
+          </div>
+          <div class="topbar-right">
+            <select class="sort-select" id="sort-select" onchange="handleSort(this.value)">
+              <option value="created_at">Recently Added</option>
+              <option value="title">Title A–Z</option>
+              <option value="year">Year</option>
+            </select>
+            <button class="btn-secondary" onclick="exportActiveCitations()" title="Export References List" style="display: flex; align-items: center; gap: 6px; padding: 9px 14px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+              Export References
+            </button>
+            <button class="btn-primary" onclick="startComparisonSelection()" id="compare-init-btn" style="background: var(--accent); display: none; align-items: center; gap: 6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M8.5 8 C8.5 9.5, 7.5 10.5, 6 10.5 C7.5 10.5, 8.5 11.5, 8.5 13 C8.5 11.5, 9.5 10.5, 11 10.5 C9.5 10.5, 8.5 9.5, 8.5 8 Z" fill="currentColor" stroke="none" /><path d="M13.5 8 C13.5 9.5, 12.5 10.5, 11 10.5 C12.5 10.5, 13.5 11.5, 13.5 13 C13.5 11.5, 14.5 10.5, 16 10.5 C14.5 10.5, 13.5 9.5, 13.5 8 Z" stroke="currentColor" stroke-width="1.5" fill="none" /></svg>
+              AI Compare (<span id="selected-papers-count">0</span>)
+            </button>
+            <button class="btn-primary" onclick="openImportModal()" id="import-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              Import Paper
+            </button>
+          </div>
+        </div>
+
+        <div id="papers-grid" class="papers-grid">
+          <!-- Paper cards rendered here -->
+        </div>
+
+        <!-- Empty state -->
+        <div id="empty-state" class="empty-state" style="display:none">
+          <div class="empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.5"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"/></svg>
+          </div>
+          <h2 class="empty-title">No papers yet</h2>
+          <p class="empty-desc">Import your first research paper to get started.<br/>Supports PDF files up to 50MB.</p>
+          <button class="btn-primary" onclick="openImportModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+            Import Your First Paper
+          </button>
+        </div>
+      </div>
+
+      <!-- GLOBAL CHAT VIEW -->
+      <div id="view-global-chat" class="view" style="display:none; flex-direction: column;">
+        <div class="detail-topbar">
+          <div class="detail-title-area">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="global-chat-title-display" class="detail-title" style="cursor:pointer;" title="Click to rename" onclick="startRenamingGlobalChat()">✨ AI Assistant (Library)</span>
+              <input id="global-chat-title-input" class="inline-rename-input" style="display:none;" onblur="saveGlobalChatTitle()" onkeydown="if(event.key==='Enter')saveGlobalChatTitle();" />
+              <button class="btn-icon-sm" onclick="startRenamingGlobalChat()" title="Rename session" style="color:var(--text-3); flex-shrink:0;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <span class="detail-meta">Query and search across all your imported papers</span>
+          </div>
+          <div class="detail-actions">
+            <button class="btn-icon btn-danger" onclick="clearGlobalChatHistory()" title="Clear chat history">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="global-chat-layout" style="display: flex; flex-direction: column; flex: 1; height: calc(100vh - 120px); padding: 24px;">
+          <div class="chat-messages" id="global-chat-messages" style="flex: 1; max-height: none;">
+            <div class="chat-welcome">
+              <div class="chat-welcome-icon">📚</div>
+              <p style="font-weight: 500; font-size: 15px; color: var(--text);">Ask questions across all your imported papers</p>
+              <p style="font-size: 13.5px; color: var(--text-2); max-width: 500px; margin-top: 4px;">The AI will retrieve relevant sections from any PDF in your library and cite its sources with clickable links.</p>
+              <span class="generating-note" style="margin-top: 8px;">Ensure your papers have been summarized or indexed so their embeddings are ready!</span>
+            </div>
+          </div>
+          
+          <div class="chat-input-area">
+            <textarea id="global-chat-input" class="chat-input" placeholder="e.g. What qualifications does Zaynab Chaudhry hold?" onkeydown="handleGlobalChatKey(event)"></textarea>
+            <button class="btn-send" id="global-send-btn" onclick="sendGlobalChatMessage()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS VIEW -->
+      <div id="view-settings" class="view" style="display:none; padding: 32px; max-width: 600px;">
+        <h1 class="view-title" style="margin-bottom: 24px;">Settings & API Keys</h1>
+        <p style="font-size: 14px; color: var(--text-2); margin-bottom: 24px;">
+          API keys are securely stored locally in your browser and are never saved to the database. Enable the toggles for the keys you want to use.
+        </p>
+        <div style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <label for="key-openai" style="font-size: 14px; font-weight: 500;">OpenAI API Key</label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <span class="switch">
+                <input type="checkbox" id="enable-openai" />
+                <span class="slider"></span>
+              </span>
+              Enable
+            </label>
+          </div>
+          <input type="password" id="key-openai" class="text-input" placeholder="sk-proj-..." style="max-width: 100%;" />
+        </div>
+        <div style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <label for="key-gemini" style="font-size: 14px; font-weight: 500;">Gemini API Key</label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <span class="switch">
+                <input type="checkbox" id="enable-gemini" />
+                <span class="slider"></span>
+              </span>
+              Enable
+            </label>
+          </div>
+          <input type="password" id="key-gemini" class="text-input" placeholder="AIzaSy..." style="max-width: 100%;" />
+        </div>
+        <div style="margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <label for="key-deepseek" style="font-size: 14px; font-weight: 500;">DeepSeek API Key</label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer;">
+              <span class="switch">
+                <input type="checkbox" id="enable-deepseek" />
+                <span class="slider"></span>
+              </span>
+              Enable
+            </label>
+          </div>
+          <input type="password" id="key-deepseek" class="text-input" placeholder="sk-..." style="max-width: 100%;" />
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+      </div>
+      <!-- PAPER DETAIL VIEW -->
+      <div id="view-detail" class="view" style="display:none">
+        <div class="detail-topbar">
+          <button class="btn-back" onclick="backToLibrary()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Library
+          </button>
+          <div class="detail-title-area">
+            <h2 class="detail-title" id="detail-title">Paper Title</h2>
+            <span class="detail-meta" id="detail-meta"></span>
+            <p class="detail-description" id="detail-description" style="margin-top: 8px; font-size: 13px; color: var(--text-2); display: none; line-height: 1.4; border-left: 2px solid var(--primary); padding-left: 8px;"></p>
+          </div>
+          <div class="detail-actions">
+            <button class="btn-icon" onclick="openCitationModal(state.currentPaper ? state.currentPaper.id : null)" title="Citation Finder">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M8 12a2 2 0 0 1 2-2V8a4 4 0 0 0-4 4h2zm5 0a2 2 0 0 1 2-2V8a4 4 0 0 0-4 4h2z" fill="currentColor" stroke="none" /></svg>
+            </button>
+            <button class="btn-icon" onclick="openEditPaperModal(state.currentPaper ? state.currentPaper.id : null)" title="Edit Paper Details">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="btn-icon btn-fav" id="fav-btn" onclick="toggleFavourite()" title="Favourite">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+            </button>
+            <button class="btn-icon btn-danger" onclick="deletePaper()" title="Delete">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+ 
+        <div class="detail-layout">
+          <!-- PDF Panel -->
+          <div class="pdf-panel">
+            <div class="pdf-toolbar">
+              <span class="pdf-page-info" id="pdf-page-info">Loading...</span>
+              <div class="pdf-controls">
+                <button class="btn-icon" onclick="zoomOut()" title="Zoom out">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M8 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+                <button class="btn-icon" onclick="zoomIn()" title="Zoom in">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M11 8v6M8 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="pdf-container" id="pdf-container">
+              <div class="pdf-loading" id="pdf-loading">
+                <div class="spinner"></div>
+                <span>Loading document...</span>
+              </div>
+              <iframe id="pdf-iframe" class="pdf-iframe" style="display:none" title="Research Paper PDF"></iframe>
+              <div id="text-reader" class="text-reader" style="display:none"></div>
+              <div id="slide-viewer" class="slide-viewer" style="display:none"></div>
+            </div>
+          </div>
+ 
+          <!-- Right Panel -->
+          <div class="right-panel">
+            <div class="tabs">
+              <button class="tab active" data-tab="summary" onclick="switchTab('summary')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><line x1="8" y1="8" x2="14" y2="8" stroke-width="1.5" /><line x1="8" y1="11" x2="14" y2="11" stroke-width="1.5" /><line x1="8" y1="14" x2="12" y2="14" stroke-width="1.5" /></svg>
+                Smart Summary
+              </button>
+              <button class="tab" data-tab="chat" onclick="switchTab('chat')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M9 7.5 C9 9.5, 8 10.5, 6 10.5 C8 10.5, 9 11.5, 9 13.5 C9 11.5, 10 10.5, 12 10.5 C10 10.5, 9 9.5, 9 7.5 Z" fill="currentColor" stroke="none" /><path d="M13.5 8.5 A 3 3 0 0 1 13.5 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" /><path d="M15.5 7 A 5 5 0 0 1 15.5 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.6" /></svg>
+                AI Assistant
+              </button>
+
+              <button class="tab" data-tab="notes" onclick="switchTab('notes')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 1 2-2v-7" stroke="currentColor" stroke-width="2"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2"/></svg>
+                Notes
+              </button>
+            </div>
+
+            <!-- Summary Tab -->
+            <div class="tab-content active" id="tab-summary">
+              <div class="summary-actions">
+                <button class="btn-generate" id="generate-btn" onclick="generateSummary()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2"/></svg>
+                  Generate AI Summary
+                </button>
+              </div>
+              <div id="summary-content" class="summary-content" style="display:none">
+                <!-- Summary sections rendered here -->
+              </div>
+              <div id="summary-generating" class="summary-generating" style="display:none">
+                <div class="spinner"></div>
+                <p>Analysing paper with AI...</p>
+                <span class="generating-note">This may take 20–40 seconds</span>
+              </div>
+            </div>
+
+            <!-- Chat Tab -->
+            <div class="tab-content" id="tab-chat" style="display:none">
+              <div class="mode-toggle-bar" style="flex-direction: column; align-items: flex-start; gap: 6px;">
+                <!-- Row 1: Local -->
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span class="mode-label" style="min-width: 52px;">🖥️ Local</span>
+                  <div class="mode-toggle" id="local-models-group">
+                    <button class="mode-btn active" id="mode-phi3" onclick="setMode('phi3')" title="phi3:latest">🔷 Phi-3</button>
+                    <button class="mode-btn" id="mode-fast" onclick="setMode('fast')" title="llama3.2:3b">⚡ Llama 3</button>
+                    <button class="mode-btn" id="mode-smart" onclick="setMode('smart')" title="qwen2.5:3b">🧠 Qwen 2.5</button>
+                  </div>
+                </div>
+                <!-- Row 2: Cloud (only shown when a provider is enabled) -->
+                <div id="cloud-row" style="display:none; align-items: center; gap: 8px;">
+                  <span class="mode-label" style="min-width: 52px;">☁️ Cloud</span>
+                  <div class="mode-toggle" id="cloud-models-group">
+                    <button class="mode-btn" id="mode-openai" onclick="setMode('openai')" title="gpt-4o-mini" style="display:none;">🟢 OpenAI</button>
+                    <button class="mode-btn" id="mode-gemini" onclick="setMode('gemini')" title="gemini-2.5-flash" style="display:none;">🔵 Gemini</button>
+                    <button class="mode-btn" id="mode-deepseek" onclick="setMode('deepseek')" title="deepseek-chat" style="display:none;">🐋 DeepSeek</button>
+                  </div>
+                </div>
+                <!-- Row 3: Model name + Clear Chat -->
+                <div style="display: flex; align-items: center; gap: 8px; padding-top: 2px;">
+                  <span class="mode-model-name" id="mode-model-name">phi3:latest</span>
+                  <button class="btn-clear-chat" onclick="clearPaperChatHistory()" title="Clear chat history">🗑 Clear Chat</button>
+                </div>
+              </div>
+
+              <div class="quick-prompts" id="quick-prompts">
+                <button class="quick-prompt" onclick="sendQuickPrompt('Explain this paper like I am 18 years old')">Explain simply</button>
+                <button class="quick-prompt" onclick="sendQuickPrompt('What is the main finding of this paper?')">Main finding</button>
+                <button class="quick-prompt" onclick="sendQuickPrompt('What are the key limitations of this study?')">Limitations</button>
+                <button class="quick-prompt" onclick="sendQuickPrompt('How can I use this paper to support a dissertation?')">Dissertation use</button>
+                <button class="quick-prompt" onclick="sendQuickPrompt('What methodology did the researchers use?')">Methodology</button>
+                <button class="quick-prompt" onclick="sendQuickPrompt('What statistics or data are most important in this paper?')">Key statistics</button>
+              </div>
+              <div class="chat-messages" id="chat-messages">
+                <div class="chat-welcome">
+                  <div class="chat-welcome-icon">✨</div>
+                  <p>Ask anything about this paper. The AI will only answer using the paper's content.</p>
+                </div>
+              </div>
+              <div class="chat-input-area">
+                <textarea id="chat-input" class="chat-input" placeholder="Ask anything about this paper..." rows="1" onkeydown="handleChatKey(event)" oninput="autoResize(this)"></textarea>
+                <button class="btn-send" id="send-btn" onclick="sendChat()">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M22 2L15 22 11 13 2 9l20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <div class="ai-provider-badge" id="ai-badge">⚡ Powered by Ollama (local AI)</div>
+            </div>
+
+            <!-- Notes Tab -->
+            <div class="tab-content" id="tab-notes" style="display:none">
+              <div class="notes-header">
+                <span class="notes-hint">Notes auto-save as you type</span>
+                <span class="notes-saved" id="notes-saved">✓ Saved</span>
+              </div>
+              <textarea
+                id="notes-editor"
+                class="notes-editor"
+                placeholder="Write your notes here...&#10;&#10;• Key insights&#10;• Quotes to remember&#10;• How this relates to your work&#10;• Questions to explore"
+                oninput="handleNotesChange()"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARISONS VIEW -->
+      <div id="view-comparisons" class="view" style="display:none">
+        <div class="topbar">
+          <div class="topbar-left">
+            <h1 class="page-title">Saved Comparisons</h1>
+          </div>
+          <div class="topbar-center">
+            <div class="search-wrapper">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M11 7.5 C11 9.5, 10 10.5, 8 10.5 C10 10.5, 11 11.5, 11 13.5 C11 11.5, 12 10.5, 14 10.5 C12 10.5, 11 9.5, 11 7.5 Z" fill="currentColor" stroke="none" /></svg>
+              <input type="text" id="comparison-search-input" class="search-input" placeholder="Search saved comparisons..." oninput="handleComparisonSearch(this.value)" />
+              <button class="search-clear" id="comparison-search-clear" onclick="clearComparisonSearch()" style="display:none">✕</button>
+            </div>
+          </div>
+          <div class="topbar-right"></div>
+        </div>
+        <div id="comparisons-grid" class="papers-grid">
+          <!-- Saved comparison cards rendered here -->
+        </div>
+        <div id="comparisons-empty-state" class="empty-state" style="display:none">
+          <div class="empty-state-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M8.5 8 C8.5 9.5, 7.5 10.5, 6 10.5 C7.5 10.5, 8.5 11.5, 8.5 13 C8.5 11.5, 9.5 10.5, 11 10.5 C9.5 10.5, 8.5 9.5, 8.5 8 Z" fill="currentColor" stroke="none" /><path d="M13.5 8 C13.5 9.5, 12.5 10.5, 11 10.5 C12.5 10.5, 13.5 11.5, 13.5 13 C13.5 11.5, 14.5 10.5, 16 10.5 C14.5 10.5, 13.5 9.5, 13.5 8 Z" stroke="currentColor" stroke-width="1.5" fill="none" /></svg>
+          </div>
+          <h3>No saved comparisons yet</h3>
+          <p>Select two or more papers in your library and click "AI Compare" to generate one.</p>
+        </div>
+      </div>
+
+      <!-- COMPARISON ACTIVE VIEW -->
+      <div id="view-comparison-active" class="view" style="display:none; flex-direction: column;">
+        <div class="detail-topbar" style="border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 20px;">
+          <div style="display:flex; align-items:center; gap: 12px;">
+            <button class="btn-secondary" onclick="goBackFromComparison()" style="display:flex; align-items:center; gap:6px; padding: 6px 12px; height: 32px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Back
+            </button>
+            <div class="detail-title-area">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span id="comparison-display-title" class="detail-title" style="cursor:pointer;" title="Click to rename" onclick="startRenamingComparison()">AI Comparison Result</span>
+                <input id="comparison-title-input" class="inline-rename-input" style="display:none;" onblur="saveComparisonTitleChange()" onkeydown="if(event.key==='Enter')saveComparisonTitleChange();" />
+                <button class="btn-icon-sm" onclick="startRenamingComparison()" title="Rename comparison" style="color:var(--text-3); flex-shrink:0;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+              <span class="detail-meta" id="comparison-display-meta">Comparing selected papers</span>
+            </div>
+          </div>
+          <div class="detail-actions" style="display: flex; gap: 8px;">
+            <button class="btn-primary" id="comparison-save-btn" onclick="saveActiveComparison()" style="height: 36px; padding: 8px 16px;">
+              💾 Save Comparison
+            </button>
+            <button class="btn-secondary" onclick="exportComparisonText()" title="Download/Copy comparison text" style="height: 36px; padding: 8px 16px;">
+              📋 Export Text
+            </button>
+          </div>
+        </div>
+
+        <div class="comparison-active-container" style="flex: 1; overflow-y: auto; padding-right: 4px;">
+          <!-- Spinner Loading Screen -->
+          <div id="comparison-loading" class="comparison-loading-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 60px 20px; text-align:center;">
+            <div class="reasoning-bubble" style="margin-bottom: 24px; padding: 24px; max-width: 480px; width:100%;">
+              <div class="reasoning-header">
+                <span class="reasoning-sparkle">✨</span>
+                <span class="reasoning-title" id="comparison-loading-text">Synthesising research literature...</span>
+              </div>
+              <div class="reasoning-loader" style="margin-top: 16px;">
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+              </div>
+              <p style="font-size: 13px; color: var(--text-2); margin-top: 16px; font-weight: normal; line-height: 1.45;">Evaluating study designs, mapping methodologies, assessing sample biases, and synthesizing conclusions.</p>
+            </div>
+          </div>
+
+          <!-- Result Content Area -->
+          <div id="comparison-result-area" class="comparison-result-area" style="display:none;">
+            <!-- Side-by-Side Table Card -->
+            <div class="comparison-section-card">
+              <h3>Side-by-Side Comparison</h3>
+              <div class="table-responsive" style="overflow-x: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                <table class="comparison-table" id="comparison-table-element">
+                  <thead>
+                    <tr>
+                      <th style="width: 20%;">Category</th>
+                      <th id="comp-th-paper-a" style="width: 40%;">Paper A</th>
+                      <th id="comp-th-paper-b" style="width: 40%;">Paper B</th>
+                    </tr>
+                  </thead>
+                  <tbody id="comparison-table-body">
+                    <!-- Table cells populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- AI Narrative Card -->
+            <div class="comparison-section-card" style="margin-top: 24px;">
+              <h3>AI Narrative Synthesis</h3>
+              <div class="comparison-narrative-text" id="comparison-narrative-text" style="line-height: 1.6; font-size: 14.5px; color: var(--text); white-space: pre-wrap; margin-top: 12px;">
+                <!-- Narrative text here -->
+              </div>
+            </div>
+
+            <!-- Evidence Confidence Panel -->
+            <div class="comparison-section-card evidence-confidence-card" style="margin-top: 24px;">
+              <div class="evidence-header" style="display: flex; align-items: center; gap: 8px;">
+                <span class="evidence-icon" style="font-size: 18px;">🛡️</span>
+                <h3 style="margin: 0;">Evidence Confidence & Critique</h3>
+              </div>
+              <div class="evidence-body" id="comparison-evidence-body" style="line-height: 1.6; font-size: 14px; color: var(--text-2); margin-top: 12px; white-space: pre-wrap;">
+                <!-- Evidence confidence text -->
+              </div>
+            </div>
+
+            <!-- Agreement Indicators Card -->
+            <div class="comparison-section-card" style="margin-top: 24px; margin-bottom: 32px;">
+              <h3>Agreement & Contradiction Indicators</h3>
+              <div class="agreement-list" id="comparison-agreement-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
+                <!-- Agreement items -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Import Modal -->
+  <div class="modal-overlay" id="import-modal" style="display:none" onclick="closeModalOnOverlay(event, 'import-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Import Research Paper</h3>
+        <button class="btn-icon" onclick="closeModal('import-modal')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="drop-zone" id="drop-zone"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)"
+          onclick="document.getElementById('file-input').click()">
+          <div class="drop-zone-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.5"/><polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"/></svg>
+          </div>
+          <p class="drop-zone-text">Drop your PDF, Word, PowerPoint, Spreadsheet, or Text file here</p>
+          <p class="drop-zone-sub">or click to browse files (PDF, DOCX, DOC, RTF, PPTX, CSV, XLSX, TXT, MD)</p>
+          <input type="file" id="file-input" accept=".pdf,.docx,.doc,.rtf,.pptx,.txt,.md,.csv,.xlsx,.xls" style="display:none" onchange="handleFileSelect(event)" />
+        </div>
+        <div class="upload-progress" id="upload-progress" style="display:none">
+          <div class="progress-bar-wrap">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          <span id="upload-status">Uploading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Folder Modal -->
+  <div class="modal-overlay" id="folder-modal" style="display:none" onclick="closeModalOnOverlay(event, 'folder-modal')">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h3 id="folder-modal-title">New Folder</h3>
+        <button class="btn-icon" onclick="closeModal('folder-modal')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="folder-name-input" class="text-input" placeholder="Folder name (e.g. Dissertation)" maxlength="50" />
+        <div class="colour-picker">
+          <span class="colour-label">Colour</span>
+          <div class="colour-swatches" id="colour-swatches">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('folder-modal')">Cancel</button>
+        <button class="btn-primary" onclick="saveFolder()" id="save-folder-btn">Create Folder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Move to Folder Modal -->
+  <div class="modal-overlay" id="move-modal" style="display:none" onclick="closeModalOnOverlay(event, 'move-modal')">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h3>Move to Folder</h3>
+        <button class="btn-icon" onclick="closeModal('move-modal')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="move-folder-list" class="move-folder-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Paper Details Modal -->
+  <div class="modal-overlay" id="edit-paper-modal" style="display:none" onclick="closeModalOnOverlay(event, 'edit-paper-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Edit Paper Details</h3>
+        <button class="btn-icon" onclick="closeModal('edit-paper-modal')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="input-group" style="margin-bottom: 16px;">
+          <label for="edit-paper-title" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-2);">Title</label>
+          <input type="text" id="edit-paper-title" class="text-input" placeholder="Enter paper title" />
+        </div>
+        <div class="input-group" style="margin-bottom: 16px;">
+          <label for="edit-paper-authors" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-2);">Authors</label>
+          <input type="text" id="edit-paper-authors" class="text-input" placeholder="Enter authors (e.g. John Doe, Jane Smith)" />
+        </div>
+        <div class="input-row" style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div class="input-group">
+            <label for="edit-paper-journal" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-2);">Journal / Publication</label>
+            <input type="text" id="edit-paper-journal" class="text-input" style="margin-bottom: 0;" placeholder="Enter journal or publisher" />
+          </div>
+          <div class="input-group">
+            <label for="edit-paper-year" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-2);">Year</label>
+            <input type="number" id="edit-paper-year" class="text-input" style="margin-bottom: 0;" placeholder="YYYY" min="1000" max="2100" />
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="edit-paper-header" style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px; color: var(--text-2);">Custom Header / Description (added to embeddings)</label>
+          <textarea id="edit-paper-header" class="text-input" style="height: 100px; resize: vertical; padding: 10px;" placeholder="Briefly describe what this PDF is about. This will be prepended to the text and indexed for semantic searches."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('edit-paper-modal')">Cancel</button>
+        <button class="btn-primary" onclick="savePaperDetails()" id="save-paper-btn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Citation Modal -->
+  <div class="modal-overlay" id="citation-modal" style="display:none" onclick="closeModalOnOverlay(event, 'citation-modal')">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h3>Generate Citation</h3>
+        <button class="btn-icon" onclick="closeModal('citation-modal')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="citation-tabs" style="display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+          <button class="tab-btn active" id="cite-tab-apa" onclick="switchCitationTab(event, 'apa')">APA 7th</button>
+          <button class="tab-btn" id="cite-tab-harvard" onclick="switchCitationTab(event, 'harvard')">Harvard</button>
+          <button class="tab-btn" id="cite-tab-bibtex" onclick="switchCitationTab(event, 'bibtex')">BibTeX</button>
+        </div>
+        <div class="citation-tab-content active" id="cite-content-apa">
+          <div class="citation-box-wrapper" style="position: relative; background: var(--glass); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px;">
+            <div class="citation-text" id="cite-text-apa" style="font-family: inherit; font-size: 14px; line-height: 1.5; color: var(--text); padding-right: 40px; white-space: pre-wrap;"></div>
+            <button class="btn-icon" onclick="copyCitationText('apa')" title="Copy Citation" style="position: absolute; right: 10px; top: 10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="citation-tab-content" id="cite-content-harvard" style="display:none">
+          <div class="citation-box-wrapper" style="position: relative; background: var(--glass); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px;">
+            <div class="citation-text" id="cite-text-harvard" style="font-family: inherit; font-size: 14px; line-height: 1.5; color: var(--text); padding-right: 40px; white-space: pre-wrap;"></div>
+            <button class="btn-icon" onclick="copyCitationText('harvard')" title="Copy Citation" style="position: absolute; right: 10px; top: 10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="citation-tab-content" id="cite-content-bibtex" style="display:none">
+          <div class="citation-box-wrapper" style="position: relative; background: var(--glass); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px;">
+            <pre class="citation-text" id="cite-text-bibtex" style="font-family: monospace; font-size: 13px; line-height: 1.5; color: var(--text); padding-right: 40px; margin: 0; white-space: pre-wrap; overflow-x: auto;"></pre>
+            <button class="btn-icon" onclick="copyCitationText('bibtex')" title="Copy Citation" style="position: absolute; right: 10px; top: 10px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeModal('citation-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bibliography Modal -->
+  <div class="modal-overlay" id="bibliography-modal" style="display:none" onclick="closeModalOnOverlay(event, 'bibliography-modal')">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="bibliography-modal-title">Export Reference List</h3>
+        <button class="btn-icon" onclick="closeModal('bibliography-modal')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="citation-tabs" style="display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+          <button class="tab-btn active" id="bib-tab-apa" onclick="switchBibliographyTab(event, 'apa')">APA 7th</button>
+          <button class="tab-btn" id="bib-tab-harvard" onclick="switchBibliographyTab(event, 'harvard')">Harvard</button>
+          <button class="tab-btn" id="bib-tab-bibtex" onclick="switchBibliographyTab(event, 'bibtex')">BibTeX</button>
+        </div>
+        <div class="bibliography-box-wrapper" style="position: relative; background: var(--glass); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; max-height: 250px; overflow-y: auto;">
+          <div id="bibliography-text" style="font-family: inherit; font-size: 13.5px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word;"></div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between;">
+        <button class="btn-secondary" onclick="closeModal('bibliography-modal')">Close</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" onclick="copyBibliography()" style="display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy All
+          </button>
+          <button class="btn-primary" onclick="downloadBibliography()" style="display: flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Download .txt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="/static/js/app.js?v=18"></script>
+</body>
+</html>
