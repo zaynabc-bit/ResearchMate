@@ -2898,7 +2898,7 @@ function createNewRewriteSession() {
   const timeline = document.getElementById('rewrite-timeline');
   timeline.innerHTML = `
     <div id="rewrite-empty-state" style="text-align: center; color: var(--text-3); margin-top: 60px;">
-      <div style="width: 48px; height: 48px; border-radius: 24px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--primary);">
+      <div style="width: 56px; height: 56px; border-radius: 16px; background: var(--bg-0); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: var(--text-2); box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </div>
       <h3 style="font-size: 16px; font-weight: 500; color: var(--text-1); margin-bottom: 8px;">Welcome to Rewrite Studio</h3>

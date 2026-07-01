@@ -2534,7 +2534,7 @@ body.unauthenticated .main-content {
 .rewrite-mode-card {
   background: var(--bg-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
