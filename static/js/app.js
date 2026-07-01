@@ -2157,6 +2157,9 @@ function startComparisonSelection() {
     };
 
     renderActiveComparison(state.activeComparison);
+    
+    // Automatically save the comparison to the database
+    saveActiveComparison(true);
   })
   .catch(err => {
     showToast(err.message, 'error');
@@ -2235,8 +2238,11 @@ function renderActiveComparison(comp) {
   }
 }
 
-function saveActiveComparison() {
+function saveActiveComparison(isAutoSave = false) {
   if (!state.activeComparison) return;
+  
+  // If it already has an ID, it means it's already saved
+  if (state.activeComparison.id) return;
 
   const payload = {
     title: state.activeComparison.title,
@@ -2257,14 +2263,19 @@ function saveActiveComparison() {
   .then(saved => {
     state.activeComparison.id = saved.id;
     document.getElementById('comparison-save-btn').style.display = 'none';
-    showToast('Comparison saved successfully!', 'success');
+    
+    if (!isAutoSave) {
+      showToast('Comparison saved successfully!', 'success');
+    }
     
     state.selectedPaperIds = [];
     updateCompareButtonState();
     loadPapers();
   })
   .catch(err => {
-    showToast(err.message, 'error');
+    if (!isAutoSave) {
+      showToast(err.message, 'error');
+    }
   });
 }
 
