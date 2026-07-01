@@ -572,8 +572,9 @@ function renderPapers() {
 
       <div class="card-meta">
         <span class="card-date">${formatDate(p.created_at)}</span>
-        <div class="card-badges">
+        <div class="card-badges" style="display: flex; gap: 6px; align-items: center;">
           ${p.summary_status === 'done' ? '<span class="badge badge-summary">✓ Summarised</span>' : ''}
+          ${getFolderBadge(p.folder_id)}
         </div>
       </div>
 
@@ -592,7 +593,6 @@ function renderPapers() {
         </div>
       </div>
 
-      ${getFolderBadge(p.folder_id)}
     </div>
     `;
   }).join('');
@@ -602,12 +602,11 @@ function getFolderBadge(folderId) {
   if (!folderId) return '';
   const folder = state.folders.find(f => f.id === folderId);
   if (!folder) return '';
-  return `<div style="position:absolute;bottom:52px;right:16px">
-    <span class="badge badge-folder">
+  return `
+    <span class="badge badge-folder" style="display: inline-flex; align-items: center; gap: 4px;">
       <span style="width:6px;height:6px;border-radius:50%;background:${folder.colour};display:inline-block;"></span>
       ${escHtml(folder.name)}
-    </span>
-  </div>`;
+    </span>`;
 }
 
 async function updateBadges() {
