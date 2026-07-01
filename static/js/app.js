@@ -254,7 +254,9 @@ async function handleAuth(type) {
       let msg = result.error.message;
       if (msg.includes('User already registered')) msg = 'Account exists. Try logging in instead.';
       else if (msg.includes('Invalid login credentials')) msg = 'Wrong username or passphrase.';
-      else if (msg.includes('rate limit')) msg = 'Too many attempts. Wait a moment and try again.';
+      else if (msg.includes('rate limit') || msg.includes('over_email_send_rate_limit') || msg.includes('email rate limit')) {
+        msg = 'Rate limit hit. Please disable "Confirm email" in your Supabase Dashboard under Authentication → Providers → Email, then try again.';
+      }
       errorMsg.textContent = msg;
       return;
     }
