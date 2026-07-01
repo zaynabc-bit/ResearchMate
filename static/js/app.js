@@ -135,6 +135,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 // Auth UI helpers
 function updateAuthUI(sess) {
   const handle = sess ? (sess.user.email || '').replace('@researchmate.app', '') : null;
+  const displayName = sess ? (sess.user.user_metadata && sess.user.user_metadata.display_name) || handle : null;
   const signUpBtn = document.getElementById('btn-sidebar-signup');
   const loginBtn = document.getElementById('btn-sidebar-login');
   const logoutBtn = document.getElementById('btn-sidebar-logout');
@@ -146,7 +147,7 @@ function updateAuthUI(sess) {
     if (loginBtn) loginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'flex';
     if (userInfo) { userInfo.style.display = 'flex'; }
-    if (handleDisplay) handleDisplay.textContent = '@' + handle;
+    if (handleDisplay) handleDisplay.textContent = displayName || ('@' + handle);
   } else {
     if (signUpBtn) signUpBtn.style.display = 'flex';
     if (loginBtn) loginBtn.style.display = 'flex';
@@ -161,18 +162,22 @@ function openAuthModal(type) {
   const submitBtn = document.getElementById('auth-modal-submit');
   const toggleText = document.getElementById('auth-toggle-text');
   const errorMsg = document.getElementById('auth-error-msg');
+  const nameField = document.getElementById('auth-name-field');
   if (errorMsg) errorMsg.textContent = '';
   document.getElementById('auth-handle').value = '';
   document.getElementById('auth-passphrase').value = '';
+  if (document.getElementById('auth-displayname')) document.getElementById('auth-displayname').value = '';
 
   if (type === 'signup') {
     title.textContent = 'Sign Up';
     submitBtn.textContent = 'Create Account';
     toggleText.textContent = 'Log In instead';
+    if (nameField) nameField.style.display = 'block';
   } else {
     title.textContent = 'Log In';
     submitBtn.textContent = 'Log In';
     toggleText.textContent = 'Sign Up instead';
+    if (nameField) nameField.style.display = 'none';
   }
   overlay.style.display = 'flex';
 }
@@ -190,9 +195,14 @@ function toggleAuthMode() {
 async function handleAuth(type) {
   const handle = (document.getElementById('auth-handle').value || '').trim();
   let pass = (document.getElementById('auth-passphrase').value || '').trim();
+  const displayName = type === 'signup' ? ((document.getElementById('auth-displayname') || {}).value || '').trim() : '';
   const errorMsg = document.getElementById('auth-error-msg');
   errorMsg.textContent = '';
 
+  if (type === 'signup' && !displayName) {
+    errorMsg.textContent = 'Please enter your name.';
+    return;
+  }
   if (!handle) {
     errorMsg.textContent = 'Please enter a username.';
     return;
@@ -202,7 +212,7 @@ async function handleAuth(type) {
     return;
   }
 
-  // Sanitise handle: strip spaces, lowercase
+  // Sanitise handle
   const safeHandle = handle.toLowerCase().replace(/[^a-z0-9_\-]/g, '');
   if (!safeHandle) {
     errorMsg.textContent = 'Username can only contain letters, numbers, _ and -';
@@ -212,7 +222,6 @@ async function handleAuth(type) {
   // Pad password to meet Supabase 6-char minimum silently
   while (pass.length < 6) pass += '0';
 
-  // Use a deterministic email from handle
   const email = safeHandle + '@researchmate.app';
 
   const submitBtn = document.getElementById('auth-modal-submit');
@@ -223,7 +232,17 @@ async function handleAuth(type) {
   try {
     let result;
     if (type === 'signup') {
-      result = await supabaseClient.auth.signUp({ email, password: pass, options: { emailRedirectTo: null } });
+      result = await supabaseClient.auth.signUp({
+        email,
+        password: pass,
+        options: {
+          emailRedirectTo: null,
+          data: {
+            username: safeHandle,
+            display_name: displayName
+          }
+        }
+      });
     } else {
       result = await supabaseClient.auth.signInWithPassword({ email, password: pass });
     }
@@ -232,7 +251,6 @@ async function handleAuth(type) {
     submitBtn.disabled = false;
 
     if (result.error) {
-      // Better error messages
       let msg = result.error.message;
       if (msg.includes('User already registered')) msg = 'Account exists. Try logging in instead.';
       else if (msg.includes('Invalid login credentials')) msg = 'Wrong username or passphrase.';
@@ -244,7 +262,8 @@ async function handleAuth(type) {
     session = result.data.session;
     updateAuthUI(session);
     closeAuthModal();
-    showToast('Welcome, @' + safeHandle + '! 🎉');
+    const greeting = displayName || safeHandle;
+    showToast('Welcome, ' + greeting + '! 🎉');
   } catch (err) {
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
