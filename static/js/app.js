@@ -2328,6 +2328,49 @@ function exportComparisonText() {
     });
 }
 
+function openComparePicker() {
+  const overlay = document.getElementById('compare-picker-overlay');
+  const list = document.getElementById('compare-picker-list');
+  overlay.style.display = 'flex';
+
+  if (!state.papers.length) {
+    list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px;">No papers in your library yet. Upload some first!</p>';
+    return;
+  }
+
+  list.innerHTML = state.papers.map(p => `
+    <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!this.querySelector('input').checked)this.style.borderColor='var(--border)'">
+      <input type="checkbox" value="${p.id}" onchange="updateComparePickerBtn()" style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;" />
+      <div style="min-width:0;">
+        <div style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(p.title || 'Untitled')}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${escHtml(p.authors || 'Unknown author')}</div>
+      </div>
+    </label>
+  `).join('');
+}
+
+function closeComparePicker() {
+  document.getElementById('compare-picker-overlay').style.display = 'none';
+}
+
+function updateComparePickerBtn() {
+  const checked = document.querySelectorAll('#compare-picker-list input[type=checkbox]:checked');
+  const btn = document.getElementById('compare-picker-btn');
+  const enough = checked.length >= 2;
+  btn.disabled = !enough;
+  btn.style.opacity = enough ? '1' : '0.5';
+}
+
+async function runCompareFromPicker() {
+  const checked = [...document.querySelectorAll('#compare-picker-list input[type=checkbox]:checked')];
+  if (checked.length < 2) { showToast('Select at least 2 papers.', 'error'); return; }
+  const ids = checked.map(c => c.value);
+  const selected = state.papers.filter(p => ids.includes(p.id));
+  closeComparePicker();
+  state.selectedPaperIds = ids;
+  await runAIComparison(selected);
+}
+
 function loadComparisons() {
   const grid = document.getElementById('comparisons-grid');
   const empty = document.getElementById('comparisons-empty-state');

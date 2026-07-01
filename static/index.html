@@ -615,26 +615,55 @@
       <div id="view-comparisons" class="view" style="display:none">
         <div class="topbar">
           <div class="topbar-left">
-            <h1 class="page-title">Saved Comparisons</h1>
+            <h1 class="page-title">AI Compare</h1>
           </div>
           <div class="topbar-center">
             <div class="search-wrapper">
-              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M11 7.5 C11 9.5, 10 10.5, 8 10.5 C10 10.5, 11 11.5, 11 13.5 C11 11.5, 12 10.5, 14 10.5 C12 10.5, 11 9.5, 11 7.5 Z" fill="currentColor" stroke="none" /></svg>
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /></svg>
               <input type="text" id="comparison-search-input" class="search-input" placeholder="Search saved comparisons..." oninput="handleComparisonSearch(this.value)" />
               <button class="search-clear" id="comparison-search-clear" onclick="clearComparisonSearch()" style="display:none">✕</button>
             </div>
           </div>
-          <div class="topbar-right"></div>
+          <div class="topbar-right">
+            <button class="btn-primary" onclick="openComparePicker()" style="display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              New Comparison
+            </button>
+          </div>
         </div>
         <div id="comparisons-grid" class="papers-grid">
           <!-- Saved comparison cards rendered here -->
         </div>
-        <div id="comparisons-empty-state" class="empty-state" style="display:none">
+        <div id="comparisons-empty-state" class="empty-state" style="display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:60vh;">
           <div class="empty-state-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" y1="16" x2="21" y2="21" /><path d="M8.5 8 C8.5 9.5, 7.5 10.5, 6 10.5 C7.5 10.5, 8.5 11.5, 8.5 13 C8.5 11.5, 9.5 10.5, 11 10.5 C9.5 10.5, 8.5 9.5, 8.5 8 Z" fill="currentColor" stroke="none" /><path d="M13.5 8 C13.5 9.5, 12.5 10.5, 11 10.5 C12.5 10.5, 13.5 11.5, 13.5 13 C13.5 11.5, 14.5 10.5, 16 10.5 C14.5 10.5, 13.5 9.5, 13.5 8 Z" stroke="currentColor" stroke-width="1.5" fill="none" /></svg>
           </div>
           <h3>No saved comparisons yet</h3>
-          <p>Select two or more papers in your library and click "AI Compare" to generate one.</p>
+          <p style="max-width:360px; margin: 8px auto 20px;">Pick two or more papers from your library and compare them with AI.</p>
+          <button class="btn-primary" onclick="openComparePicker()" style="display:inline-flex;align-items:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Start a Comparison
+          </button>
+        </div>
+
+        <!-- Paper Picker Modal -->
+        <div id="compare-picker-overlay" onclick="closeComparePicker()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+          <div onclick="event.stopPropagation()" style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px; max-width:540px; width:calc(100% - 40px); max-height:80vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,0.3);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+              <h3 style="margin:0; font-size:18px;">Select Papers to Compare</h3>
+              <button onclick="closeComparePicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-secondary);">✕</button>
+            </div>
+            <p style="margin:0 0 14px; color:var(--text-secondary); font-size:13px;">Select 2 or more papers, then click Compare.</p>
+            <div id="compare-picker-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
+              <!-- Papers listed here -->
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+              <button class="btn-secondary" onclick="closeComparePicker()">Cancel</button>
+              <button class="btn-primary" id="compare-picker-btn" onclick="runCompareFromPicker()" disabled style="opacity:0.5;">
+                ✨ Compare Selected
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
