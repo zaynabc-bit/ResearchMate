@@ -977,7 +977,7 @@ function renderSummary(paper) {
     summaryContent.style.display = 'flex';
     summaryContent.innerHTML = buildSummaryHTML(paper);
   } else {
-    generateBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7" /><line x1="16" x2="21" y1="16" x2="21" /><line x1="8" y1="8" x2="14" y2="8" stroke-width="1.5" /><line x1="8" y1="11" x2="14" y2="11" stroke-width="1.5" /><line x1="8" y1="14" x2="12" y2="14" stroke-width="1.5" /></svg> Generate Smart Summary`;
+    generateBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Generate Smart Summary`;
     summaryContent.style.display = 'none';
     summaryContent.innerHTML = '';
   }
