@@ -719,6 +719,9 @@ body.unauthenticated .main-content {
 }
 
 .paper-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
