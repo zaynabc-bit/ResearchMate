@@ -5,10 +5,10 @@
 // Supabase Config
 const supabaseUrl = 'https://fsuztgcsrbuvhvnnblbl.supabase.co';
 const supabaseKey = 'sb_publishable_k-kL82doDKALUtUgGuuOgg_gd7DTJnj';
-let supabase = null;
+let supabaseClient = null;
 try {
   if (window.supabase) {
-    supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
   } else {
     console.warn("Supabase SDK not loaded from CDN.");
   }
@@ -99,9 +99,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Check auth
-  if (supabase) {
+  if (supabaseClient) {
     try {
-      const { data, error } = await supabase.auth.getSession();
+      const { data, error } = await supabaseClient.auth.getSession();
       if (data && data.session) {
         session = data.session;
         document.body.classList.remove('unauthenticated');
@@ -174,9 +174,9 @@ async function handleAuth(type) {
 
     let result;
     if (type === 'signup') {
-      result = await supabase.auth.signUp({ email, password: pass });
+      result = await supabaseClient.auth.signUp({ email, password: pass });
     } else {
-      result = await supabase.auth.signInWithPassword({ email, password: pass });
+      result = await supabaseClient.auth.signInWithPassword({ email, password: pass });
     }
     
     btn.textContent = originalText;
@@ -206,8 +206,8 @@ async function handleAuth(type) {
 }
 
 async function logout() {
-  if (supabase) {
-    await supabase.auth.signOut();
+  if (supabaseClient) {
+    await supabaseClient.auth.signOut();
   }
   session = null;
   document.body.classList.add('unauthenticated');
