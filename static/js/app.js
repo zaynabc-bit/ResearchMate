@@ -2674,7 +2674,7 @@ async function searchGlobalWebReferences() {
   content.style.display = 'none';
 
   try {
-    const res = await fetch(`/api/references/search?q=${encodeURIComponent(query)}`);
+    const res = await fetch(`/api/papers/references/search?q=${encodeURIComponent(query)}`);
     if (!res.ok) throw new Error('Failed to fetch web references');
     
     const references = await res.json();
