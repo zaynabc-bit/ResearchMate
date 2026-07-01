@@ -2954,9 +2954,10 @@ async function loadSynthesisLibraryPapers() {
 async function generateSynthesis() {
   if (!session) return openAuthModal('login');
   
-  // Collect selected papers
+  // Collect selected papers (both from Synthesis view and global library selection)
   const checkboxes = document.querySelectorAll('.synthesis-paper-checkbox:checked');
-  const paper_ids = Array.from(checkboxes).map(cb => cb.value);
+  const checkedIds = Array.from(checkboxes).map(cb => cb.value);
+  const paper_ids = [...new Set([...checkedIds, ...state.selectedPaperIds])];
   
   const manual_text = document.getElementById('synthesis-manual-text').value.trim();
   const style = document.getElementById('synthesis-format-style').value;
