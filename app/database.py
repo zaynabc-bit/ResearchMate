@@ -33,10 +33,21 @@ async def init_db():
         from app.models.chunk import PaperChunk  # noqa
         from app.models.comparison import PaperComparison  # noqa
         await conn.run_sync(Base.metadata.create_all)
-        
-        # Add custom_header column if it doesn't exist
-        try:
-            from sqlalchemy import text
-            await conn.execute(text("ALTER TABLE papers ADD COLUMN custom_header TEXT"))
-        except Exception:
-            pass  # Already exists
+
+        # Auto-migration: add missing columns without dropping data
+        migrations = [
+            ("papers",       "custom_header TEXT"),
+            ("papers",       "user_id TEXT DEFAULT 'local-user'"),
+            ("folders",      "user_id TEXT DEFAULT 'local-user'"),
+            ("paper_chunks", "user_id TEXT DEFAULT 'local-user'"),
+            ("chat_messages","user_id TEXT DEFAULT 'local-user'"),
+            ("comparisons",  "user_id TEXT DEFAULT 'local-user'"),
+        ]
+        from sqlalchemy import text
+        for table, col_def in migrations:
+            col_name = col_def.split()[0]
+            try:
+                await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col_def}"))
+                print(f"[Migration] Added {col_name} to {table}")
+            except Exception:
+                pass  # Column already exists — safe to ignore
