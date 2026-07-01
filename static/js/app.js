@@ -487,11 +487,11 @@ document.getElementById('folder-name-input')?.addEventListener('keydown', e => {
 function renderColourSwatches() {
   const container = document.getElementById('colour-swatches');
   container.innerHTML = FOLDER_COLOURS.map(c => `
-    <div class="colour-swatch ${c === state.selectedColour ? 'selected' : ''}"
-      style="background:${c}"
+    <button type="button" class="colour-swatch ${c === state.selectedColour ? 'selected' : ''}"
+      style="background-color: ${c}; --swatch-color: ${c};"
       onclick="selectColour('${c}')"
       title="${c}">
-    </div>
+    </button>
   `).join('');
 }
 

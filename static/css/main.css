@@ -1471,13 +1471,44 @@ body.unauthenticated .main-content {
   height: 28px;
   border-radius: 50%;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.15s;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.15s ease-out;
 }
-.colour-swatch:hover, .colour-swatch.selected { 
-  transform: scale(2);
+
+.colour-swatch:hover, .colour-swatch:focus-visible { 
+  transform: scale(1.15); 
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 4px var(--swatch-color), 0 0 8px 2px var(--swatch-color); 
   z-index: 10;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.colour-swatch.selected { 
+  transform: scale(1.15); 
+  box-shadow: 0 0 0 2px var(--bg-1), 0 0 0 5px var(--swatch-color), 0 0 12px 2px var(--swatch-color);
+  z-index: 10;
+}
+
+.colour-swatch::after {
+  content: '';
+  display: block;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.colour-swatch.selected::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* Move folder list */
