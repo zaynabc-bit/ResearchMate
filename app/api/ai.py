@@ -15,6 +15,7 @@ from app.services.embedding_service import (
     build_paper_chunks, has_chunks, check_embed_available,
 )
 from app.models.chat import ChatMessage as DBChatMessage
+from app.api.auth import get_current_user_id
 
 router = APIRouter()
 
@@ -78,8 +79,9 @@ async def summarise_paper(
     paper_id: str,
     request: SummariseRequest = SummariseRequest(),
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -109,16 +111,25 @@ async def summarise_paper(
 
         summary_data = await generate_summary(paper.extracted_text, mode)
 
-        paper.summary        = summary_data.get("summary")
-        paper.research_aim   = summary_data.get("research_aim")
-        paper.methodology    = summary_data.get("methodology")
-        paper.key_findings   = summary_data.get("key_findings")
-        paper.limitations    = summary_data.get("limitations")
-        paper.strengths      = summary_data.get("strengths")
-        paper.weaknesses     = summary_data.get("weaknesses")
-        paper.future_work    = summary_data.get("future_work")
-        keywords             = summary_data.get("keywords", [])
-        paper.keywords       = json.dumps(keywords) if keywords else None
+        def ensure_str(val):
+            if isinstance(val, list):
+                return "\n".join(f"• {v}" for v in val)
+            return val if isinstance(val, str) else str(val) if val is not None else None
+
+        paper.summary        = ensure_str(summary_data.get("summary"))
+        paper.research_aim   = ensure_str(summary_data.get("research_aim"))
+        paper.methodology    = ensure_str(summary_data.get("methodology"))
+        paper.key_findings   = ensure_str(summary_data.get("key_findings"))
+        paper.limitations    = ensure_str(summary_data.get("limitations"))
+        paper.strengths      = ensure_str(summary_data.get("strengths"))
+        paper.weaknesses     = ensure_str(summary_data.get("weaknesses"))
+        paper.future_work    = ensure_str(summary_data.get("future_work"))
+        
+        keywords = summary_data.get("keywords", [])
+        if isinstance(keywords, str):
+            paper.keywords = keywords
+        else:
+            paper.keywords = json.dumps(keywords) if keywords else None
         paper.summary_status = "done"
 
         await db.commit()
@@ -136,28 +147,28 @@ async def summarise_paper(
 # ── Chat ──────────────────────────────────────────────────
 
 @router.get("/chat/global/history")
-async def get_global_chat_history(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == None).order_by(DBChatMessage.created_at.asc()))
+async def get_global_chat_history(db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == None, DBChatMessage.user_id == user_id).order_by(DBChatMessage.created_at.asc()))
     messages = result.scalars().all()
     return [{"role": m.role, "content": m.content} for m in messages]
 
 @router.delete("/chat/global/history")
-async def clear_global_chat_history(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == None))
+async def clear_global_chat_history(db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == None, DBChatMessage.user_id == user_id))
     for msg in result.scalars().all():
         await db.delete(msg)
     await db.commit()
     return {"message": "Global chat history cleared"}
 
 @router.get("/chat/{paper_id}/history")
-async def get_paper_chat_history(paper_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == paper_id).order_by(DBChatMessage.created_at.asc()))
+async def get_paper_chat_history(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == paper_id, DBChatMessage.user_id == user_id).order_by(DBChatMessage.created_at.asc()))
     messages = result.scalars().all()
     return [{"role": m.role, "content": m.content} for m in messages]
 
 @router.delete("/chat/{paper_id}/history")
-async def clear_paper_chat_history(paper_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == paper_id))
+async def clear_paper_chat_history(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(select(DBChatMessage).where(DBChatMessage.paper_id == paper_id, DBChatMessage.user_id == user_id))
     for msg in result.scalars().all():
         await db.delete(msg)
     await db.commit()
@@ -167,6 +178,7 @@ async def clear_paper_chat_history(paper_id: str, db: AsyncSession = Depends(get
 async def global_chat(
     request: ChatRequest,
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
     """Chat with all papers globally (library RAG)."""
     ollama_ok = await check_ollama_available()
@@ -182,7 +194,7 @@ async def global_chat(
     mode = request.mode or "fast"
 
     # Save user message to DB
-    user_msg = DBChatMessage(paper_id=None, role="user", content=request.message)
+    user_msg = DBChatMessage(paper_id=None, role="user", content=request.message, user_id=user_id)
     db.add(user_msg)
     await db.commit()
 
@@ -194,7 +206,7 @@ async def global_chat(
             
             embed_ok = await check_embed_available()
             if embed_ok:
-                result = await db.execute(select(ResearchPaper))
+                result = await db.execute(select(ResearchPaper).where(ResearchPaper.user_id == user_id))
                 all_papers = result.scalars().all()
                 for p in all_papers:
                     if p.extracted_text and not await has_chunks(p.id, db):
@@ -209,7 +221,7 @@ async def global_chat(
                 # Fallback: check if we have any papers at all
                 from sqlalchemy import func
                 from app.models.paper import ResearchPaper
-                paper_count_res = await db.execute(select(func.count(ResearchPaper.id)))
+                paper_count_res = await db.execute(select(func.count(ResearchPaper.id)).where(ResearchPaper.user_id == user_id))
                 paper_count = paper_count_res.scalar()
                 
                 if paper_count == 0:
@@ -333,7 +345,7 @@ RELEVANT EXCERPTS:
                                     continue
             
             if full_response:
-                assistant_msg = DBChatMessage(paper_id=None, role="assistant", content=full_response)
+                assistant_msg = DBChatMessage(paper_id=None, role="assistant", content=full_response, user_id=user_id)
                 db.add(assistant_msg)
                 await db.commit()
         except Exception as e:
@@ -348,8 +360,9 @@ async def chat_paper(
     paper_id: str,
     request: ChatRequest,
     db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
@@ -360,7 +373,7 @@ async def chat_paper(
     mode = request.mode or "fast"
 
     # Save user message to DB
-    user_msg = DBChatMessage(paper_id=paper_id, role="user", content=request.message)
+    user_msg = DBChatMessage(paper_id=paper_id, role="user", content=request.message, user_id=user_id)
     db.add(user_msg)
     await db.commit()
 
@@ -380,7 +393,7 @@ async def chat_paper(
                 yield f"data: {json.dumps({'content': chunk})}\n\n"
             
             if full_response:
-                assistant_msg = DBChatMessage(paper_id=paper_id, role="assistant", content=full_response)
+                assistant_msg = DBChatMessage(paper_id=paper_id, role="assistant", content=full_response, user_id=user_id)
                 db.add(assistant_msg)
                 await db.commit()
         except Exception as e:
@@ -393,9 +406,9 @@ async def chat_paper(
 # ── Index chunks (manual trigger) ─────────────────────────
 
 @router.post("/index/{paper_id}")
-async def index_paper(paper_id: str, db: AsyncSession = Depends(get_db)):
+async def index_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
     """Manually trigger chunk + embedding generation for a paper."""
-    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id))
+    result = await db.execute(select(ResearchPaper).where(ResearchPaper.id == paper_id, ResearchPaper.user_id == user_id))
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
