@@ -164,7 +164,7 @@ function openAuthModal(type) {
   const toggleText = document.getElementById('auth-toggle-text');
   const errorMsg = document.getElementById('auth-error-msg');
   const nameField = document.getElementById('auth-name-field');
-  if (errorMsg) errorMsg.textContent = '';
+  if (errorMsg) { errorMsg.textContent = ''; errorMsg.style.color = '#ef4444'; }
   document.getElementById('auth-handle').value = '';
   document.getElementById('auth-passphrase').value = '';
   if (document.getElementById('auth-displayname')) document.getElementById('auth-displayname').value = '';
@@ -262,11 +262,25 @@ async function handleAuth(type) {
       return;
     }
 
-    session = result.data.session;
-    updateAuthUI(session);
-    closeAuthModal();
-    const greeting = displayName || safeHandle;
-    showToast('Welcome, ' + greeting + '! 🎉');
+    if (type === 'signup') {
+      // After sign up, take them to the login page to confirm credentials
+      openAuthModal('login');
+      document.getElementById('auth-handle').value = safeHandle;
+      document.getElementById('auth-error-msg').textContent = '';
+      // Show a success message inside the login modal
+      const successEl = document.getElementById('auth-error-msg');
+      if (successEl) {
+        successEl.style.color = '#22c55e';
+        successEl.textContent = '✅ Account created! Now log in with your passphrase.';
+      }
+      showToast('Account created! Now log in 🎉');
+    } else {
+      session = result.data.session;
+      updateAuthUI(session);
+      closeAuthModal();
+      const greeting = displayName || safeHandle;
+      showToast('Welcome back, ' + greeting + '! 🎉');
+    }
   } catch (err) {
     submitBtn.textContent = originalText;
     submitBtn.disabled = false;
