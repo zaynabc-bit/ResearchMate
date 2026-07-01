@@ -627,6 +627,12 @@ function navigateTo(view) {
   document.getElementById('search-input').value = '';
   document.getElementById('search-clear').style.display = 'none';
 
+  // Only show greeting on home page
+  const greetingBar = document.getElementById('greeting-bar');
+  if (greetingBar) {
+    greetingBar.style.display = (view === 'home' && session) ? 'flex' : 'none';
+  }
+
   // Close sidebar on mobile
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('mobile-overlay');
