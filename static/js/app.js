@@ -2385,9 +2385,13 @@ async function runCompareFromPicker() {
   try {
     const res = await fetch('/api/papers?sort=created_at');
     const allPapers = await res.json();
-    const selected = allPapers.filter(p => ids.includes(p.id));
+    
+    // Populate state.papers so startComparisonSelection can read titles
+    state.papers = allPapers;
     state.selectedPaperIds = ids;
-    await runAIComparison(selected);
+    
+    // Start the comparison
+    startComparisonSelection();
   } catch (e) {
     showToast('Failed to start comparison. Try again.', 'error');
   }
