@@ -90,7 +90,7 @@ const FOLDER_COLOURS = [
 
 // UI Initialization
 window.addEventListener('DOMContentLoaded', async () => {
-  // Check theme first so it applies immediately
+  // Apply theme first
   const savedTheme = localStorage.getItem('theme') || 'dark';
   if (savedTheme === 'light') {
     document.documentElement.setAttribute('data-theme', 'light');
@@ -98,31 +98,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (toggleBtn) toggleBtn.textContent = '🌙';
   }
 
-  // Check auth
+  // Show home immediately
+  switchView('home');
+
+  // Check if already logged in
   if (supabaseClient) {
     try {
-      const { data, error } = await supabaseClient.auth.getSession();
+      const { data } = await supabaseClient.auth.getSession();
       if (data && data.session) {
         session = data.session;
-        document.body.classList.remove('unauthenticated');
-        switchView('home');
-        updateHomeDashboard();
-      } else {
-        document.body.classList.add('unauthenticated');
-        switchView('auth');
+        updateAuthUI(data.session);
       }
     } catch (err) {
-      console.error("Auth check failed:", err);
-      document.body.classList.add('unauthenticated');
-      switchView('auth');
-    }
-  } else {
-    console.warn("Supabase unavailable. Falling back to local mode.");
-    document.body.classList.add('unauthenticated');
-    switchView('auth');
-    const errorMsg = document.getElementById('auth-error-msg');
-    if (errorMsg) {
-      errorMsg.textContent = "Vault offline. Check connection or ad-blocker.";
+      console.warn('Auth check failed silently:', err);
     }
   }
 
@@ -130,7 +118,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   state.keys.openai = localStorage.getItem('key-openai') || '';
   state.keys.gemini = localStorage.getItem('key-gemini') || '';
   state.keys.deepseek = localStorage.getItem('key-deepseek') || '';
-  
   state.enabledCloud.openai = localStorage.getItem('enable-openai') === 'true';
   state.enabledCloud.gemini = localStorage.getItem('enable-gemini') === 'true';
   state.enabledCloud.deepseek = localStorage.getItem('enable-deepseek') === 'true';
@@ -139,75 +126,137 @@ window.addEventListener('DOMContentLoaded', async () => {
   const savedMode = localStorage.getItem('aiMode') || 'fast';
   setMode(savedMode);
 
-  if (session) {
-    await Promise.all([loadFolders(), loadPapers()]);
-    updateFoldersUI();
-    updateSidebarFolders();
-  }
+  await Promise.all([loadFolders(), loadPapers()]);
+  updateFoldersUI();
+  updateSidebarFolders();
+  updateHomeDashboard();
 });
 
-// Auth Functions
-async function handleAuth(type) {
-  const handle = document.getElementById('auth-handle').value.trim();
-  const pass = document.getElementById('auth-passphrase').value.trim();
+// Auth UI helpers
+function updateAuthUI(sess) {
+  const handle = sess ? (sess.user.email || '').replace('@researchmate.app', '') : null;
+  const signUpBtn = document.getElementById('btn-sidebar-signup');
+  const loginBtn = document.getElementById('btn-sidebar-login');
+  const logoutBtn = document.getElementById('btn-sidebar-logout');
+  const userInfo = document.getElementById('auth-user-info');
+  const handleDisplay = document.getElementById('auth-handle-display');
+
+  if (sess) {
+    if (signUpBtn) signUpBtn.style.display = 'none';
+    if (loginBtn) loginBtn.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'flex';
+    if (userInfo) { userInfo.style.display = 'flex'; }
+    if (handleDisplay) handleDisplay.textContent = '@' + handle;
+  } else {
+    if (signUpBtn) signUpBtn.style.display = 'flex';
+    if (loginBtn) loginBtn.style.display = 'flex';
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (userInfo) userInfo.style.display = 'none';
+  }
+}
+
+function openAuthModal(type) {
+  const overlay = document.getElementById('auth-modal-overlay');
+  const title = document.getElementById('auth-modal-title');
+  const submitBtn = document.getElementById('auth-modal-submit');
+  const toggleText = document.getElementById('auth-toggle-text');
   const errorMsg = document.getElementById('auth-error-msg');
-  
-  if (!handle || !pass) {
-    errorMsg.textContent = 'Please enter both a handle and a passphrase.';
+  if (errorMsg) errorMsg.textContent = '';
+  document.getElementById('auth-handle').value = '';
+  document.getElementById('auth-passphrase').value = '';
+
+  if (type === 'signup') {
+    title.textContent = 'Sign Up';
+    submitBtn.textContent = 'Create Account';
+    toggleText.textContent = 'Log In instead';
+  } else {
+    title.textContent = 'Log In';
+    submitBtn.textContent = 'Log In';
+    toggleText.textContent = 'Sign Up instead';
+  }
+  overlay.style.display = 'flex';
+}
+
+function closeAuthModal() {
+  document.getElementById('auth-modal-overlay').style.display = 'none';
+}
+
+function toggleAuthMode() {
+  const title = document.getElementById('auth-modal-title');
+  const isSignup = title.textContent === 'Sign Up';
+  openAuthModal(isSignup ? 'login' : 'signup');
+}
+
+async function handleAuth(type) {
+  const handle = (document.getElementById('auth-handle').value || '').trim();
+  let pass = (document.getElementById('auth-passphrase').value || '').trim();
+  const errorMsg = document.getElementById('auth-error-msg');
+  errorMsg.textContent = '';
+
+  if (!handle) {
+    errorMsg.textContent = 'Please enter a username.';
     return;
   }
-  
-  const email = `${handle}@researchmate.local`;
-  errorMsg.textContent = '';
-  
-  try {
-    const btn = type === 'signup' ? document.getElementById('btn-signup') : document.getElementById('btn-login');
-    const originalText = btn.textContent;
-    btn.textContent = 'Processing...';
-    btn.disabled = true;
+  if (!pass) {
+    errorMsg.textContent = 'Please enter a passphrase.';
+    return;
+  }
 
+  // Sanitise handle: strip spaces, lowercase
+  const safeHandle = handle.toLowerCase().replace(/[^a-z0-9_\-]/g, '');
+  if (!safeHandle) {
+    errorMsg.textContent = 'Username can only contain letters, numbers, _ and -';
+    return;
+  }
+
+  // Pad password to meet Supabase 6-char minimum silently
+  while (pass.length < 6) pass += '0';
+
+  // Use a deterministic email from handle
+  const email = safeHandle + '@researchmate.app';
+
+  const submitBtn = document.getElementById('auth-modal-submit');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = 'Working...';
+  submitBtn.disabled = true;
+
+  try {
     let result;
     if (type === 'signup') {
-      result = await supabaseClient.auth.signUp({ email, password: pass });
+      result = await supabaseClient.auth.signUp({ email, password: pass, options: { emailRedirectTo: null } });
     } else {
       result = await supabaseClient.auth.signInWithPassword({ email, password: pass });
     }
-    
-    btn.textContent = originalText;
-    btn.disabled = false;
 
-    if (result.error) throw result.error;
-    
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+
+    if (result.error) {
+      // Better error messages
+      let msg = result.error.message;
+      if (msg.includes('User already registered')) msg = 'Account exists. Try logging in instead.';
+      else if (msg.includes('Invalid login credentials')) msg = 'Wrong username or passphrase.';
+      else if (msg.includes('rate limit')) msg = 'Too many attempts. Wait a moment and try again.';
+      errorMsg.textContent = msg;
+      return;
+    }
+
     session = result.data.session;
-    switchView('home');
-    
-    // Load user data
-    document.body.classList.remove('unauthenticated');
-    fetchFolders().then(() => {
-      updateFoldersUI();
-      updateSidebarFolders();
-    });
-    fetchPapers().then(renderPapers);
-    updateHomeDashboard();
-    
-    showToast(`Welcome to your vault, @${handle}!`);
+    updateAuthUI(session);
+    closeAuthModal();
+    showToast('Welcome, @' + safeHandle + '! 🎉');
   } catch (err) {
-    errorMsg.textContent = err.message;
-    const btn = type === 'signup' ? document.getElementById('btn-signup') : document.getElementById('btn-login');
-    btn.textContent = type === 'signup' ? 'Create Vault' : 'Access Library';
-    btn.disabled = false;
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
+    errorMsg.textContent = err.message || 'Something went wrong. Try again.';
   }
 }
 
 async function logout() {
-  if (supabaseClient) {
-    await supabaseClient.auth.signOut();
-  }
+  if (supabaseClient) await supabaseClient.auth.signOut();
   session = null;
-  document.body.classList.add('unauthenticated');
-  switchView('auth');
-  state.papers = [];
-  state.folders = [];
+  updateAuthUI(null);
+  showToast('Logged out.');
 }
 
 function saveSettings() {
