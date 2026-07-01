@@ -355,7 +355,7 @@ body {
   flex-direction: column;
 }
 
-.view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
 .view.active { display: flex; }
 
 /* ============================================
