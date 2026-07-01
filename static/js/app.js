@@ -554,11 +554,11 @@ function renderPapers() {
     return `
     <div class="paper-card" onclick="openPaper('${p.id}')" style="animation-delay:${i * 0.04}s">
       
-      <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 4px;">
-        <div class="card-checkbox-wrapper" onclick="event.stopPropagation();" style="position: static; padding-top: 2px;">
-          <input type="checkbox" class="card-checkbox" ${state.selectedPaperIds.includes(p.id) ? 'checked' : ''} onchange="togglePaperSelection('${p.id}')" style="width: 16px; height: 16px; cursor: pointer;" />
-        </div>
-        
+      <div class="card-checkbox-wrapper" onclick="event.stopPropagation();" style="position: absolute; top: 12px; left: 12px; z-index: 10;">
+        <input type="checkbox" class="card-checkbox" ${state.selectedPaperIds.includes(p.id) ? 'checked' : ''} onchange="togglePaperSelection('${p.id}')" style="width: 16px; height: 16px; cursor: pointer;" />
+      </div>
+
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
         <div class="card-title" style="margin: 0; flex: 1;">${escHtml(p.title)}</div>
         
         <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -574,8 +574,8 @@ function renderPapers() {
         </div>
       </div>
 
-      <div class="card-authors" style="margin-left: 28px;">${escHtml(p.authors || 'Unknown Author')}</div>
-      ${p.custom_header ? `<div class="card-description" style="margin-left: 28px;" title="${escHtml(p.custom_header)}">${escHtml(p.custom_header)}</div>` : ''}
+      <div class="card-authors" style="margin-bottom: 12px;">${escHtml(p.authors || 'Unknown Author')}</div>
+      ${p.custom_header ? `<div class="card-description" style="margin-bottom: 12px;" title="${escHtml(p.custom_header)}">${escHtml(p.custom_header)}</div>` : ''}
 
       <div class="card-meta">
         <span class="card-date">${formatDate(p.created_at)}</span>
