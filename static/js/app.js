@@ -694,6 +694,7 @@ function navigateTo(view) {
     switchView('web-references');
   } else if (view === 'rewrite-studio') {
     switchView('rewrite-studio');
+    loadRewriteHistory();
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
@@ -2810,5 +2811,68 @@ async function generateRewrite() {
     document.getElementById('rewrite-result').style.display = 'block';
     document.getElementById('btn-generate-rewrite').disabled = false;
     updateRewriteStats();
+    loadRewriteHistory();
+  }
+}
+
+let rewriteHistoryData = [];
+
+async function loadRewriteHistory() {
+  try {
+    const res = await fetch('/api/ai/rewrite/history');
+    if (!res.ok) throw new Error('Failed to load history');
+    rewriteHistoryData = await res.json();
+    
+    const grid = document.getElementById('rewrite-history-grid');
+    if (rewriteHistoryData.length === 0) {
+      grid.innerHTML = '<p style="color: var(--text-3); font-size: 14px;">No saved rewrites yet. They will appear here automatically.</p>';
+      return;
+    }
+    
+    grid.innerHTML = rewriteHistoryData.map(item => `
+      <div class="card" style="cursor: pointer;" onclick="loadSavedRewrite('${item.id}')">
+        <div class="card-meta">
+          <span class="card-date">${formatDate(item.created_at)}</span>
+          <div class="card-badges">
+            <span class="badge" style="background: var(--bg-2); color: var(--text-1);">${escHtml(item.mode)}</span>
+          </div>
+        </div>
+        <p style="font-size: 13px; color: var(--text-2); margin-top: 8px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+          ${escHtml(item.rewritten_text)}
+        </p>
+        <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
+          <button class="btn-icon btn-danger" onclick="event.stopPropagation(); deleteSavedRewrite('${item.id}')" title="Delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M9 6V4h6v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function loadSavedRewrite(id) {
+  const item = rewriteHistoryData.find(r => r.id === id);
+  if (!item) return;
+  
+  document.getElementById('rewrite-original').value = item.original_text;
+  document.getElementById('rewrite-result').value = item.rewritten_text;
+  setRewriteMode(item.mode);
+  updateRewriteStats();
+  
+  // Scroll up to the editors
+  document.getElementById('view-rewrite-studio').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function deleteSavedRewrite(id) {
+  if (!confirm('Are you sure you want to delete this saved rewrite?')) return;
+  try {
+    const res = await fetch(\`/api/ai/rewrite/\${id}\`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete');
+    loadRewriteHistory();
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to delete saved rewrite');
   }
 }

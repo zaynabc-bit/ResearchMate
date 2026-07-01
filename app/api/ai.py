@@ -15,6 +15,7 @@ from app.services.embedding_service import (
     build_paper_chunks, has_chunks, check_embed_available,
 )
 from app.models.chat import ChatMessage as DBChatMessage
+from app.models.rewrite import SavedRewrite
 from app.api.auth import get_current_user_id
 
 router = APIRouter()
@@ -433,8 +434,12 @@ async def index_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_id
 # ── Rewrite Studio ────────────────────────────────────────
 
 @router.post("/rewrite")
-async def rewrite_text_endpoint(req: RewriteRequest):
-    """Rewrite text using AI based on selected mode."""
+async def rewrite_text_endpoint(
+    req: RewriteRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Rewrite text using AI based on selected mode and save to history."""
     from app.services.ai_service import rewrite_text
     
     ollama_ok = await check_ollama_available()
@@ -443,6 +448,62 @@ async def rewrite_text_endpoint(req: RewriteRequest):
         
     try:
         rewritten = await rewrite_text(req.original_text, req.mode, req.tone_example)
-        return {"rewritten_text": rewritten}
+        
+        # Save to DB
+        saved_rewrite = SavedRewrite(
+            user_id=user_id,
+            original_text=req.original_text,
+            rewritten_text=rewritten,
+            mode=req.mode
+        )
+        db.add(saved_rewrite)
+        await db.commit()
+        await db.refresh(saved_rewrite)
+        
+        return {
+            "id": saved_rewrite.id,
+            "rewritten_text": rewritten,
+            "mode": saved_rewrite.mode,
+            "created_at": saved_rewrite.created_at
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/rewrite/history")
+async def get_rewrite_history(
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Fetch saved rewrite history for the user."""
+    result = await db.execute(
+        select(SavedRewrite)
+        .where(SavedRewrite.user_id == user_id)
+        .order_by(SavedRewrite.created_at.desc())
+    )
+    rewrites = result.scalars().all()
+    return [{
+        "id": r.id,
+        "original_text": r.original_text,
+        "rewritten_text": r.rewritten_text,
+        "mode": r.mode,
+        "created_at": r.created_at
+    } for r in rewrites]
+
+@router.delete("/rewrite/{rewrite_id}")
+async def delete_saved_rewrite(
+    rewrite_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    """Delete a saved rewrite."""
+    result = await db.execute(
+        select(SavedRewrite)
+        .where(SavedRewrite.id == rewrite_id, SavedRewrite.user_id == user_id)
+    )
+    saved_rewrite = result.scalar_one_or_none()
+    if not saved_rewrite:
+        raise HTTPException(status_code=404, detail="Saved rewrite not found")
+        
+    await db.delete(saved_rewrite)
+    await db.commit()
+    return {"status": "success"}
