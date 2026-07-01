@@ -2317,3 +2317,112 @@ body {
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
 }
+
+/* ============================================
+   MOBILE RESPONSIVENESS
+   ============================================ */
+
+.mobile-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.5);
+  z-index: 95;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 90;
+}
+
+.hamburger-btn {
+  background: none;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex;
+  }
+  
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: calc(-1 * var(--sidebar-w));
+    height: 100vh;
+    z-index: 100;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
+  }
+  
+  .sidebar.open {
+    left: 0;
+  }
+  
+  .main-content {
+    width: 100vw;
+  }
+
+  /* Make view fill available height under mobile header */
+  .view {
+    height: calc(100vh - 60px); /* Approx mobile header height */
+  }
+  
+  .topbar {
+    padding: 16px;
+    flex-wrap: wrap;
+  }
+  
+  #search-container {
+    min-width: 100%;
+    margin-right: 0;
+    order: 3;
+    margin-top: 12px;
+  }
+  
+  .papers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Comparisons specific grid */
+  .comparisons-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* View container paddings */
+  .library-container, .comparisons-container {
+    padding: 16px;
+  }
+
+  /* Global Chat layout on mobile */
+  .global-chat-layout {
+    flex-direction: column;
+  }
+
+  .global-chat-left {
+    min-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    height: 40vh;
+  }
+
+  .global-chat-main {
+    height: 60vh;
+  }
+}

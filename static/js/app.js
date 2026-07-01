@@ -117,6 +117,20 @@ function saveSettings() {
   
   showToast('Settings saved successfully!');
 }
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobile-overlay');
+  if (sidebar && overlay) {
+    sidebar.classList.toggle('open');
+    if (sidebar.classList.contains('open')) {
+      overlay.style.display = 'block';
+      setTimeout(() => overlay.style.opacity = '1', 10);
+    } else {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.style.display = 'none', 300);
+    }
+  }
+}
 
 function toggleTheme() {
   const root = document.documentElement;
@@ -391,6 +405,17 @@ function navigateTo(view) {
   state.searchQuery = '';
   document.getElementById('search-input').value = '';
   document.getElementById('search-clear').style.display = 'none';
+
+  // Close sidebar on mobile
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobile-overlay');
+  if (sidebar && sidebar.classList.contains('open')) {
+    sidebar.classList.remove('open');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      setTimeout(() => overlay.style.display = 'none', 300);
+    }
+  }
 
   // Update nav items
   const homeNav = document.getElementById('nav-home');

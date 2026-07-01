@@ -17,7 +17,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-header-top">
-          <div class="logo" onclick="window.location.href='/'">
+          <div class="logo" onclick="navigateTo('home')" style="cursor: pointer;">
             <img class="logo-img" src="static/logo.jpg" alt="ResearchMate Logo" />
             <span class="logo-text">ResearchMate</span>
           </div>
@@ -79,8 +79,21 @@
       </div>
     </aside>
 
+    <!-- Mobile Sidebar Overlay -->
+    <div class="mobile-overlay" id="mobile-overlay" onclick="toggleSidebar()"></div>
+
     <!-- Main Content -->
     <main class="main-content">
+      
+      <!-- Mobile Header -->
+      <div class="mobile-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button class="hamburger-btn" onclick="toggleSidebar()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span style="font-size: 18px; font-weight: 700; color: var(--text);">ResearchMate</span>
+        </div>
+      </div>
 
       <!-- HOME / DASHBOARD VIEW -->
       <div id="view-home" class="view active">
