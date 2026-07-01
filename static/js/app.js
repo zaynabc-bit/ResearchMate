@@ -2868,7 +2868,7 @@ function loadSavedRewrite(id) {
 async function deleteSavedRewrite(id) {
   if (!confirm('Are you sure you want to delete this saved rewrite?')) return;
   try {
-    const res = await fetch(\`/api/ai/rewrite/\${id}\`, { method: 'DELETE' });
+    const res = await fetch(`/api/ai/rewrite/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete');
     loadRewriteHistory();
   } catch (err) {
