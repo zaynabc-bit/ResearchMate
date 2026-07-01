@@ -9,7 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="static/css/main.css?v=20" />
+  <link rel="stylesheet" href="static/css/main.css?v=21" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="app">
@@ -57,6 +58,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
           Settings
         </button>
+        <button class="nav-item" id="nav-logout" onclick="logout()" style="margin-top: auto; color: #ef4444;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Lock Vault
+        </button>
       </nav>
 
       <div class="sidebar-section">
@@ -95,8 +100,38 @@
         </div>
       </div>
 
+      <!-- AUTH VIEW -->
+      <div id="view-auth" class="view active">
+        <div class="auth-container">
+          <div class="auth-card">
+            <div class="auth-logo">
+              <img src="static/logo.jpg" alt="ResearchMate Logo" />
+              <h2>ResearchMate</h2>
+            </div>
+            <p class="auth-subtitle">Enter your researcher credentials to access your library.</p>
+            
+            <div class="auth-form" id="auth-form">
+              <div class="form-group">
+                <label for="auth-handle">Researcher Handle</label>
+                <div class="input-wrapper">
+                  <span class="input-prefix">@</span>
+                  <input type="text" id="auth-handle" placeholder="yourname" autocomplete="username" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="auth-passphrase">Vault Passphrase</label>
+                <input type="password" id="auth-passphrase" placeholder="••••••••••••" autocomplete="current-password" />
+              </div>
+              <button class="auth-btn" id="btn-login" onclick="handleAuth('login')">Access Library</button>
+              <button class="auth-btn btn-secondary" id="btn-signup" onclick="handleAuth('signup')">Create Vault</button>
+            </div>
+            <p class="auth-error" id="auth-error-msg"></p>
+          </div>
+        </div>
+      </div>
+
       <!-- HOME / DASHBOARD VIEW -->
-      <div id="view-home" class="view active">
+      <div id="view-home" class="view">
         <div class="home-container">
           <!-- Hero Section -->
           <div class="home-hero-section">
@@ -864,6 +899,6 @@
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="static/js/app.js?v=20"></script>
+  <script src="static/js/app.js?v=21"></script>
 </body>
 </html>

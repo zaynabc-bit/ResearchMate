@@ -2,6 +2,12 @@
    ResearchMate — Frontend Application Logic
    ============================================ */
 
+// Supabase Config
+const supabaseUrl = 'https://fsuztgcsrbuvhvnnblbl.supabase.co';
+const supabaseKey = 'sb_publishable_k-kL82doDKALUtUgGuuOgg_gd7DTJnj';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+let session = null;
+
 // Intercept fetch to support custom Backend API URL (for hosting on GitHub Pages)
 const originalFetch = window.fetch;
 window.fetch = function(input, init) {
@@ -11,13 +17,24 @@ window.fetch = function(input, init) {
   if (url.startsWith('/api/') && backendUrl) {
     const baseUrl = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
     url = baseUrl + url;
-    
     if (typeof input === 'string') {
       input = url;
     } else {
       input = new Request(url, input);
     }
   }
+
+  // Inject Supabase Auth Token
+  if (session && session.access_token) {
+    init = init || {};
+    init.headers = init.headers || {};
+    if (init.headers instanceof Headers) {
+      init.headers.set('Authorization', `Bearer ${session.access_token}`);
+    } else {
+      init.headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+  }
+
   return originalFetch(input, init);
 };
 
@@ -63,7 +80,17 @@ const FOLDER_COLOURS = [
 ];
 
 // UI Initialization
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // Check auth
+  const { data, error } = await supabase.auth.getSession();
+  if (data && data.session) {
+    session = data.session;
+    document.getElementById('view-auth').classList.remove('active');
+    document.getElementById('view-home').classList.add('active');
+  } else {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-auth').classList.add('active');
+  }
   // Check theme
   const savedTheme = localStorage.getItem('theme') || 'dark';
   if (savedTheme === 'light') {
@@ -85,10 +112,75 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedMode = localStorage.getItem('aiMode') || 'fast';
   setMode(savedMode);
 
-  updateFoldersUI();
-  updateSidebarFolders();
-  renderPapers();
+  if (session) {
+    fetchFolders().then(() => {
+      updateFoldersUI();
+      updateSidebarFolders();
+    });
+    fetchPapers().then(renderPapers);
+  }
 });
+
+// Auth Functions
+async function handleAuth(type) {
+  const handle = document.getElementById('auth-handle').value.trim();
+  const pass = document.getElementById('auth-passphrase').value.trim();
+  const errorMsg = document.getElementById('auth-error-msg');
+  
+  if (!handle || !pass) {
+    errorMsg.textContent = 'Please enter both a handle and a passphrase.';
+    return;
+  }
+  
+  const email = `${handle}@researchmate.local`;
+  errorMsg.textContent = '';
+  
+  try {
+    const btn = type === 'signup' ? document.getElementById('btn-signup') : document.getElementById('btn-login');
+    const originalText = btn.textContent;
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+
+    let result;
+    if (type === 'signup') {
+      result = await supabase.auth.signUp({ email, password: pass });
+    } else {
+      result = await supabase.auth.signInWithPassword({ email, password: pass });
+    }
+    
+    btn.textContent = originalText;
+    btn.disabled = false;
+
+    if (result.error) throw result.error;
+    
+    session = result.data.session;
+    document.getElementById('view-auth').classList.remove('active');
+    document.getElementById('view-home').classList.add('active');
+    
+    // Load user data
+    fetchFolders().then(() => {
+      updateFoldersUI();
+      updateSidebarFolders();
+    });
+    fetchPapers().then(renderPapers);
+    
+    showToast(`Welcome to your vault, @${handle}!`);
+  } catch (err) {
+    errorMsg.textContent = err.message;
+    const btn = type === 'signup' ? document.getElementById('btn-signup') : document.getElementById('btn-login');
+    btn.textContent = type === 'signup' ? 'Create Vault' : 'Access Library';
+    btn.disabled = false;
+  }
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  session = null;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-auth').classList.add('active');
+  state.papers = [];
+  state.folders = [];
+}
 
 function saveSettings() {
   const oKey = document.getElementById('key-openai').value.trim();
