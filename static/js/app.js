@@ -2501,9 +2501,14 @@ function renderComparisonsList() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="${c.is_favourite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
             ${c.is_favourite ? 'Favourited' : 'Favourite'}
           </button>
-          <button class="card-action-btn card-action-danger-btn" onclick="event.stopPropagation(); deleteComparisonById('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
-            🗑 Delete
-          </button>
+          <div style="display:flex; gap:8px;">
+            <button class="card-action-btn" onclick="event.stopPropagation(); renameComparison('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
+              ✏️ Edit
+            </button>
+            <button class="card-action-btn card-action-danger-btn" onclick="event.stopPropagation(); deleteComparisonById('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
+              🗑 Delete
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -2548,6 +2553,37 @@ function deleteComparisonById(id, title) {
     .catch(err => {
       showToast(err.message, 'error');
     });
+}
+
+function renameComparison(id, oldTitle) {
+  const newTitle = prompt('Enter new comparison title:', oldTitle);
+  if (!newTitle || newTitle.trim() === '' || newTitle === oldTitle) return;
+
+  fetch(`/api/comparisons/${id}/rename`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: newTitle.trim() })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === 'success') {
+      const idx = state.comparisons.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        state.comparisons[idx].title = data.title;
+        renderComparisonsList();
+      }
+      if (state.activeComparison && state.activeComparison.id === id) {
+        state.activeComparison.title = data.title;
+        document.getElementById('comparison-title').innerText = data.title;
+      }
+      showToast('Comparison renamed successfully', 'success');
+    } else {
+      showToast('Failed to rename comparison', 'error');
+    }
+  })
+  .catch(err => {
+    showToast('Failed to rename comparison', 'error');
+  });
 }
 
 function toggleComparisonFavourite(id) {
