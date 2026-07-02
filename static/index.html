@@ -885,7 +885,24 @@
           <div onclick="event.stopPropagation()" style="background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px; max-width:540px; width:calc(100% - 40px); max-height:80vh; display:flex; flex-direction:column; box-shadow:0 24px 60px rgba(0,0,0,0.3);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
               <h3 style="margin:0; font-size:18px;">Select Papers to Compare</h3>
-              <button onclick="closeComparePicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-secondary);">✕</button>
+              <div style="display:flex; align-items:center; gap: 12px;">
+                <select class="sort-select" id="picker-sort-select" onchange="openComparePicker(this.value)">
+                  <option value="created_at">Recently Added</option>
+                  <option value="title">Title (A-Z)</option>
+                  <option value="author">First Author (A-Z)</option>
+                  <option value="read_count">Most Frequently Read</option>
+                  <option value="last_opened">Most Recently Opened</option>
+                  <optgroup label="Publication Year">
+                    <option value="year_desc">Newest First</option>
+                    <option value="year_asc">Oldest First</option>
+                  </optgroup>
+                  <optgroup label="Paper Length">
+                    <option value="pages_desc">Longest First</option>
+                    <option value="pages_asc">Shortest First</option>
+                  </optgroup>
+                </select>
+                <button onclick="closeComparePicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-secondary);">✕</button>
+              </div>
             </div>
             <p style="margin:0 0 14px; color:var(--text-secondary); font-size:13px;">Select 2 or more papers, then click Compare.</p>
             <div id="compare-picker-list" style="overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:8px; margin-bottom:18px;">
@@ -1198,6 +1215,6 @@
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="static/js/app.js?v=28"></script>
+  <script src="static/js/app.js?v=29"></script>
 </body>
 </html>

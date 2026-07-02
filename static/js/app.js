@@ -2369,20 +2369,24 @@ function exportComparisonText() {
     });
 }
 
-async function openComparePicker() {
+async function openComparePicker(sort = 'created_at') {
   const overlay = document.getElementById('compare-picker-overlay');
   const list = document.getElementById('compare-picker-list');
+  
+  // Save currently selected papers if the modal is already open
+  const selectedIds = Array.from(list.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+  
   overlay.style.display = 'flex';
   list.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:24px;">Loading papers...</p>';
 
-  // Reset button
+  // Reset button temporarily
   const btn = document.getElementById('compare-picker-btn');
   btn.disabled = true;
   btn.style.opacity = '0.5';
 
   try {
-    // Always fetch ALL papers regardless of current view filter
-    const res = await fetch('/api/papers?sort=created_at');
+    // Fetch papers sorted by the requested parameter
+    const res = await fetch(`/api/papers?sort=${sort}`);
     const allPapers = await res.json();
 
     if (!allPapers.length) {
@@ -2390,15 +2394,20 @@ async function openComparePicker() {
       return;
     }
 
-    list.innerHTML = allPapers.map(p => `
+    list.innerHTML = allPapers.map(p => {
+      const isChecked = selectedIds.includes(p.id) ? 'checked' : '';
+      return `
       <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:border-color 0.15s;">
-        <input type="checkbox" value="${p.id}" data-title="${escHtml(p.title || 'Untitled')}" onchange="updateComparePickerBtn()" style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;" />
+        <input type="checkbox" value="${p.id}" data-title="${escHtml(p.title || 'Untitled')}" ${isChecked} onchange="updateComparePickerBtn()" style="accent-color:var(--primary);width:16px;height:16px;flex-shrink:0;" />
         <div style="min-width:0;">
           <div style="font-weight:600;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(p.title || 'Untitled')}</div>
           <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${escHtml(p.authors || 'Unknown author')}</div>
         </div>
       </label>
-    `).join('');
+    `}).join('');
+    
+    // Re-evaluate button state
+    updateComparePickerBtn();
   } catch (e) {
     list.innerHTML = '<p style="color:#ef4444;text-align:center;padding:24px;">Failed to load papers. Try again.</p>';
   }
