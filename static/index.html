@@ -987,7 +987,12 @@
 
             <!-- AI Narrative Card -->
             <div class="comparison-section-card" style="margin-top: 24px;">
-              <h3>AI Narrative Synthesis</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>AI Narrative Synthesis</h3>
+                <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative')" style="padding: 4px 10px; font-size: 12px; gap: 4px; display: flex; align-items: center;">
+                  🖍️ Highlight
+                </button>
+              </div>
               <div class="comparison-narrative-text" id="comparison-narrative-text" style="line-height: 1.6; font-size: 14.5px; color: var(--text); white-space: pre-wrap; margin-top: 12px;">
                 <!-- Narrative text here -->
               </div>
@@ -995,9 +1000,14 @@
 
             <!-- Evidence Confidence Panel -->
             <div class="comparison-section-card evidence-confidence-card" style="margin-top: 24px;">
-              <div class="evidence-header" style="display: flex; align-items: center; gap: 8px;">
-                <span class="evidence-icon" style="font-size: 18px;">🛡️</span>
-                <h3 style="margin: 0;">Evidence Confidence & Critique</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="evidence-header" style="display: flex; align-items: center; gap: 8px;">
+                  <span class="evidence-icon" style="font-size: 18px;">🛡️</span>
+                  <h3 style="margin: 0;">Evidence Confidence & Critique</h3>
+                </div>
+                <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence')" style="padding: 4px 10px; font-size: 12px; gap: 4px; display: flex; align-items: center;">
+                  🖍️ Highlight
+                </button>
               </div>
               <div class="evidence-body" id="comparison-evidence-body" style="line-height: 1.6; font-size: 14px; color: var(--text-2); margin-top: 12px; white-space: pre-wrap;">
                 <!-- Evidence confidence text -->
@@ -1215,6 +1225,6 @@
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="static/js/app.js?v=35"></script>
+  <script src="static/js/app.js?v=36"></script>
 </body>
 </html>

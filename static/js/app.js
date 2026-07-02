@@ -2239,14 +2239,14 @@ function renderActiveComparison(comp) {
   }
 
   // Narrative
-  document.getElementById('comparison-narrative-text').textContent = data.narrative || 'No narrative synthesis available.';
+  document.getElementById('comparison-narrative-text').innerHTML = data.narrative || 'No narrative synthesis available.';
 
   // Evidence
   let confText = data.confidence;
   if (typeof confText !== 'string' || !confText.trim()) {
     confText = null;
   }
-  document.getElementById('comparison-evidence-body').textContent = confText || 'No evidence critique available for this comparison.';
+  document.getElementById('comparison-evidence-body').innerHTML = confText || 'No evidence critique available for this comparison.';
 
   // Agreement
   const listEl = document.getElementById('comparison-agreement-list');
@@ -2321,11 +2321,52 @@ function saveActiveComparison(isAutoSave = false) {
     updateCompareButtonState();
     loadPapers();
   })
+  })
   .catch(err => {
     if (!isAutoSave) {
       showToast(err.message, 'error');
     }
   });
+}
+
+function highlightSelection(containerId, dataKey) {
+  const selection = window.getSelection();
+  if (!selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  if (range.collapsed) return;
+
+  const container = document.getElementById(containerId);
+  if (!container.contains(range.commonAncestorContainer)) {
+    showToast('Please select text inside the section to highlight it.', 'info');
+    return;
+  }
+
+  const mark = document.createElement('mark');
+  mark.style.backgroundColor = '#fef08a';
+  mark.style.color = 'inherit';
+  mark.style.padding = '2px 0';
+  mark.style.borderRadius = '3px';
+
+  try {
+    range.surroundContents(mark);
+  } catch (e) {
+    showToast('Cannot highlight across multiple elements. Try a smaller selection.', 'error');
+    return;
+  }
+
+  selection.removeAllRanges();
+  if (!state.activeComparison) return;
+
+  state.activeComparison.comparison_data[dataKey] = container.innerHTML;
+
+  if (state.activeComparison.id) {
+    fetch(`/api/comparisons/${state.activeComparison.id}/data`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ comparison_data: state.activeComparison.comparison_data })
+    }).catch(err => console.error('Failed to sync highlight', err));
+  }
 }
 
 function goBackFromComparison() {
@@ -2335,6 +2376,13 @@ function goBackFromComparison() {
   } else {
     navigateTo('all');
   }
+}
+
+function stripHtml(html) {
+  if (!html) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
 }
 
 function exportComparisonText() {
@@ -2359,7 +2407,7 @@ function exportComparisonText() {
   }
 
   text += `\n\n--- AI NARRATIVE SYNTHESIS ---\n`;
-  text += `${data.narrative || 'N/A'}\n\n`;
+  text += `${stripHtml(data.narrative) || 'N/A'}\n\n`;
 
   let exportConfText = data.confidence;
   if (typeof exportConfText !== 'string' || !exportConfText.trim()) {
@@ -2367,7 +2415,7 @@ function exportComparisonText() {
   }
 
   text += `--- EVIDENCE CONFIDENCE & CRITIQUE ---\n`;
-  text += `${exportConfText || 'No evidence critique available for this comparison.'}\n\n`;
+  text += `${stripHtml(exportConfText) || 'No evidence critique available for this comparison.'}\n\n`;
 
   text += `--- AGREEMENT & CONTRADICTION INDICATORS ---\n`;
   if (data.agreement && Array.isArray(data.agreement)) {

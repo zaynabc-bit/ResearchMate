@@ -27,6 +27,9 @@ class ComparisonSaveRequest(BaseModel):
 class ComparisonRenameRequest(BaseModel):
     title: str
 
+class ComparisonDataUpdateRequest(BaseModel):
+    comparison_data: dict
+
 @router.post("/generate")
 async def api_generate_comparison(
     request: ComparisonGenerateRequest,
@@ -265,3 +268,19 @@ async def toggle_comparison_favourite(
     c.is_favourite = not getattr(c, "is_favourite", False)
     await db.commit()
     return {"status": "success", "is_favourite": c.is_favourite}
+
+@router.put("/{id}/data")
+async def update_comparison_data(
+    id: str,
+    request: ComparisonDataUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
+):
+    res = await db.execute(select(PaperComparison).where(PaperComparison.id == id, PaperComparison.user_id == user_id))
+    c = res.scalar_one_or_none()
+    if not c:
+        raise HTTPException(status_code=404, detail="Comparison not found")
+    
+    c.comparison_data = json.dumps(request.comparison_data)
+    await db.commit()
+    return {"status": "success"}
