@@ -118,8 +118,8 @@
 
       <div class="sidebar-section">
         <div class="sidebar-section-header">
-          <span>Library</span>
-          <button class="btn-icon" onclick="openNewFolderModal()" title="New library">
+          <span>Folders</span>
+          <button class="btn-icon" onclick="openNewFolderModal()" title="New folder">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
           </button>
         </div>
@@ -245,7 +245,7 @@
                 </div>
                 <div class="feature-card-content">
                   <h3>Smart Search</h3>
-                  <p>Library, notes & smart filters</p>
+                  <p>Folders, notes & smart filters</p>
                 </div>
               </div>
             </div>
@@ -264,7 +264,7 @@
                 </div>
                 <div class="stat-item">
                   <div class="stat-number" id="home-stat-folders">0</div>
-                  <div class="stat-label">Library</div>
+                  <div class="stat-label">Folders</div>
                 </div>
                 <div class="stat-item">
                   <div class="stat-number" id="home-stat-favourites">0</div>
@@ -1028,13 +1028,13 @@
   <div class="modal-overlay" id="folder-modal" style="display:none" onclick="closeModalOnOverlay(event, 'folder-modal')">
     <div class="modal modal-small">
       <div class="modal-header">
-        <h3 id="folder-modal-title">New Library</h3>
+        <h3 id="folder-modal-title">New Folder</h3>
         <button class="btn-icon" onclick="closeModal('folder-modal')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <input type="text" id="folder-name-input" class="text-input" placeholder="Library name (e.g. Dissertation)" maxlength="50" />
+        <input type="text" id="folder-name-input" class="text-input" placeholder="Folder name (e.g. Dissertation)" maxlength="50" />
         <div class="colour-picker">
           <span class="colour-label">Colour</span>
           <div class="colour-swatches" id="colour-swatches">
@@ -1044,7 +1044,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn-secondary" onclick="closeModal('folder-modal')">Cancel</button>
-        <button class="btn-primary" onclick="saveFolder()" id="save-folder-btn">Create Library</button>
+        <button class="btn-primary" onclick="saveFolder()" id="save-folder-btn">Create Folder</button>
       </div>
     </div>
   </div>
@@ -1053,7 +1053,7 @@
   <div class="modal-overlay" id="move-modal" style="display:none" onclick="closeModalOnOverlay(event, 'move-modal')">
     <div class="modal modal-small">
       <div class="modal-header">
-        <h3>Move to Library</h3>
+        <h3>Move to Folder</h3>
         <button class="btn-icon" onclick="closeModal('move-modal')">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>

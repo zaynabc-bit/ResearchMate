@@ -399,7 +399,7 @@ async function loadFolders() {
 function renderFolderList() {
   const el = document.getElementById('folder-list');
   if (!state.folders.length) {
-    el.innerHTML = '<p style="font-size:12px;color:var(--text-3);padding:8px 10px;">No library collections yet</p>';
+    el.innerHTML = '<p style="font-size:12px;color:var(--text-3);padding:8px 10px;">No folders yet</p>';
     return;
   }
   el.innerHTML = state.folders.map(f => `
@@ -420,9 +420,9 @@ async function deleteFolder(folderId) {
     await fetch(`/api/folders/${folderId}`, { method: 'DELETE' });
     if (state.currentView === folderId) navigateTo('all');
     await loadFolders();
-    showToast('Library deleted', 'info');
+    showToast('Folder deleted', 'info');
   } catch (e) {
-    showToast('Failed to delete library', 'error');
+    showToast('Failed to delete folder', 'error');
   }
 }
 
@@ -432,9 +432,9 @@ async function deleteFolder(folderId) {
 function openNewFolderModal() {
   state.editingFolderId = null;
   state.selectedColour = '#6366f1';
-  document.getElementById('folder-modal-title').textContent = 'New Library';
+  document.getElementById('folder-modal-title').textContent = 'New Folder';
   document.getElementById('folder-name-input').value = '';
-  document.getElementById('save-folder-btn').textContent = 'Create Library';
+  document.getElementById('save-folder-btn').textContent = 'Create Folder';
   updateColourSwatches();
   showModal('folder-modal');
   setTimeout(() => document.getElementById('folder-name-input').focus(), 100);
@@ -445,7 +445,7 @@ function openEditFolderModal(folderId) {
   if (!folder) return;
   state.editingFolderId = folderId;
   state.selectedColour = folder.colour;
-  document.getElementById('folder-modal-title').textContent = 'Rename Library';
+  document.getElementById('folder-modal-title').textContent = 'Rename Folder';
   document.getElementById('folder-name-input').value = folder.name;
   document.getElementById('save-folder-btn').textContent = 'Save Changes';
   updateColourSwatches();
@@ -464,14 +464,14 @@ async function saveFolder() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, colour: state.selectedColour }),
       });
-      showToast('Library updated', 'success');
+      showToast('Folder updated', 'success');
     } else {
       await fetch('/api/folders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, colour: state.selectedColour }),
       });
-      showToast('Library created', 'success');
+      showToast('Folder created', 'success');
     }
     closeModal('folder-modal');
     await loadFolders();
@@ -1179,7 +1179,7 @@ function openMoveModal(paperId) {
   const list = document.getElementById('move-folder-list');
   list.innerHTML = [
     `<div class="move-folder-item" onclick="movePaper(null)">
-      <span>📂</span> No Library (remove from library)
+      <span>📂</span> No Folder (remove from folder)
     </div>`,
     ...state.folders.map(f => `
       <div class="move-folder-item" onclick="movePaper('${f.id}')">
@@ -1984,7 +1984,7 @@ async function copyCitationText(format) {
 async function exportActiveCitations() {
   const folderId = state.currentFolderId || "all";
   const folderName = state.currentFolderId ? 
-    (state.folders.find(f => f.id === state.currentFolderId)?.name || "Library") : "All Library";
+    (state.folders.find(f => f.id === state.currentFolderId)?.name || "Folder") : "All Library";
   
   document.getElementById('bibliography-modal-title').textContent = `Export References: ${folderName}`;
   
@@ -2048,7 +2048,7 @@ function downloadBibliography() {
   
   const cleanText = activeBibliography.replace(/\*/g, '');
   const folderName = state.currentFolderId ? 
-    (state.folders.find(f => f.id === state.currentFolderId)?.name || "Library") : "All_Library";
+    (state.folders.find(f => f.id === state.currentFolderId)?.name || "Folder") : "All_Library";
   
   const blob = new Blob([cleanText], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
