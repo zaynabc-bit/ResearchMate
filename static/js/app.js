@@ -2341,6 +2341,14 @@ function highlightSelection(containerId, dataKey, color = '#fef08a') {
     return;
   }
 
+  // Capture the closest td if we are in the table, before manipulating the DOM
+  let targetTd = null;
+  if (dataKey === 'table') {
+    let node = range.commonAncestorContainer;
+    if (node.nodeType === 3) node = node.parentNode;
+    targetTd = node.closest('td');
+  }
+
   if (color === 'erase') {
     let node = range.commonAncestorContainer;
     if (node.nodeType === 3) node = node.parentNode;
@@ -2373,17 +2381,15 @@ function highlightSelection(containerId, dataKey, color = '#fef08a') {
   if (!state.activeComparison) return;
 
   if (dataKey === 'table') {
-    // If highlighting inside the table, we must find which cell was updated
-    const td = mark.closest('td');
-    if (td) {
-      const tr = td.closest('tr');
+    if (targetTd) {
+      const tr = targetTd.closest('tr');
       if (tr && tr.cells.length >= 3) {
         const category = tr.cells[0].textContent;
-        const colIndex = Array.from(tr.cells).indexOf(td);
+        const colIndex = Array.from(tr.cells).indexOf(targetTd);
         if (colIndex === 1) {
-          state.activeComparison.comparison_data.table[category].paper_a = td.innerHTML;
+          state.activeComparison.comparison_data.table[category].paper_a = targetTd.innerHTML;
         } else if (colIndex === 2) {
-          state.activeComparison.comparison_data.table[category].paper_b = td.innerHTML;
+          state.activeComparison.comparison_data.table[category].paper_b = targetTd.innerHTML;
         }
       }
     }
