@@ -194,47 +194,54 @@ async def retrieve_relevant_chunks(
     )
     all_chunks = result.scalars().all()
 
-    if not all_chunks:
-        return []
-
-    # Check if embeddings are available
-    chunks_with_embeddings = [c for c in all_chunks if c.embedding]
-
-    if not chunks_with_embeddings:
-        # Fallback: return first top_k chunks (no semantic search)
-        return [c.chunk_text for c in all_chunks[:top_k]]
-
-    # Generate query embedding
-    try:
-        query_vec = await embed_text(query)
-    except Exception:
-        # Fallback: return first top_k chunks
-        return [c.chunk_text for c in all_chunks[:top_k]]
-
-    import re
     # Check if user is asking about a specific slide
     target_slide = None
+    import re
     slide_match = re.search(r'(?i)\bslides?\s*(\d+)', query)
     if slide_match:
         target_slide = f"--- Slide {slide_match.group(1)} ---"
 
-    # Score all chunks by cosine similarity
+    query_vec = None
+    try:
+        query_vec = await embed_text(query)
+    except Exception as e:
+        print(f"[RAG] Local query embedding failed: {e}, falling back to text search.")
+
+    query_lower = query.lower()
+    query_words = set(query_lower.split())
+
     scored: List[Tuple[float, str]] = []
-    for chunk in chunks_with_embeddings:
-        try:
-            chunk_vec = json.loads(chunk.embedding)
-            score = cosine_similarity(query_vec, chunk_vec)
-            
-            # Boost score if this chunk contains the exact slide being asked about
-            if target_slide and target_slide in chunk.chunk_text:
-                score += 1.0  # Massive boost to guarantee it gets retrieved
+    for chunk in all_chunks:
+        score = 0.0
+        
+        # 1. Semantic scoring
+        if query_vec and chunk.embedding:
+            try:
+                chunk_vec = json.loads(chunk.embedding)
+                score = cosine_similarity(query_vec, chunk_vec)
+            except Exception:
+                pass
                 
+        # 2. Textual Fallback scoring
+        if score == 0.0:
+            chunk_text_lower = chunk.chunk_text.lower()
+            overlap = sum(1 for word in query_words if word in chunk_text_lower)
+            if overlap > 0:
+                score = (overlap / len(query_words)) * 0.5
+                
+        # Boost score if this chunk contains the exact slide being asked about
+        if target_slide and target_slide in chunk.chunk_text:
+            score += 1.0  # Massive boost to guarantee it gets retrieved
+
+        if score > 0.0:
             scored.append((score, chunk.chunk_text))
-        except Exception:
-            continue
 
     # Sort by similarity descending
     scored.sort(key=lambda x: x[0], reverse=True)
+    
+    # If we couldn't find anything at all (e.g. no words matched), return first k chunks as absolute fallback
+    if not scored:
+        return [c.chunk_text for c in all_chunks[:top_k]]
 
     return [text for _, text in scored[:top_k]]
 
@@ -250,21 +257,24 @@ async def has_chunks(paper_id: str, db: AsyncSession) -> bool:
 async def retrieve_global_relevant_chunks(
     query: str,
     db: AsyncSession,
+    user_id: str,
     top_k: int = 5,
 ) -> list:
-    """Retrieve semantically similar chunks across ALL papers in the database."""
+    """Retrieve semantically similar chunks across ALL papers in the database for a user."""
+    from app.models.paper import ResearchPaper
+    
+    query_vec = None
     try:
         query_vec = await embed_text(query)
     except Exception as e:
-        print(f"[RAG] Global query embedding failed: {e}")
-        return []
+        print(f"[RAG] Global query embedding failed: {e}, falling back to text search.")
 
-    # Fetch all chunks joined with their parent paper metadata
-    from app.models.paper import ResearchPaper
+    # Fetch all chunks joined with their parent paper metadata, filtered by user_id
+    # We fetch chunks even if embedding is None to support the fallback
     result = await db.execute(
         select(PaperChunk, ResearchPaper.title, ResearchPaper.id)
         .join(ResearchPaper, PaperChunk.paper_id == ResearchPaper.id)
-        .where(PaperChunk.embedding.isnot(None))
+        .where(ResearchPaper.user_id == user_id)
     )
     rows = result.all()
 
@@ -272,18 +282,38 @@ async def retrieve_global_relevant_chunks(
         return []
 
     scored = []
+    query_lower = query.lower()
+    query_words = set(query_lower.split())
+
     for chunk, title, paper_id in rows:
-        try:
-            chunk_vec = json.loads(chunk.embedding)
-            score = cosine_similarity(query_vec, chunk_vec)
+        score = 0.0
+        
+        # 1. Semantic scoring
+        if query_vec and chunk.embedding:
+            try:
+                chunk_vec = json.loads(chunk.embedding)
+                score = cosine_similarity(query_vec, chunk_vec)
+            except Exception:
+                pass
+                
+        # 2. Textual Fallback scoring (TF-style keyword overlap)
+        if score == 0.0:
+            chunk_text_lower = chunk.chunk_text.lower()
+            overlap = sum(1 for word in query_words if word in chunk_text_lower)
+            if overlap > 0:
+                score = (overlap / len(query_words)) * 0.5  # Max fallback score is 0.5 (lower than high-confidence semantic matches)
+                
+        # 3. Boost for title matches
+        if any(word in title.lower() for word in query_words):
+            score += 0.2
+
+        if score > 0.05: # Minimum threshold
             scored.append({
                 "score": score,
                 "text": chunk.chunk_text,
                 "paper_title": title,
                 "paper_id": paper_id
             })
-        except Exception:
-            continue
 
     scored.sort(key=lambda x: x["score"], reverse=True)
     return scored[:top_k]

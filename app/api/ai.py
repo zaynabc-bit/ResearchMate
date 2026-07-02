@@ -221,7 +221,7 @@ async def global_chat(
 
             # 1. Retrieve global relevant chunks
             from app.services.embedding_service import retrieve_global_relevant_chunks
-            relevant = await retrieve_global_relevant_chunks(request.message, db)
+            relevant = await retrieve_global_relevant_chunks(request.message, db, user_id)
             
             if not relevant:
                 # Fallback: check if we have any papers at all
