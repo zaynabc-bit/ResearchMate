@@ -2269,10 +2269,10 @@ function renderActiveComparison(comp) {
       div.innerHTML = `
         <div style="display: flex; align-items: center; gap: 8px;">
           <span class="agreement-tag ${badgeClass}" style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: bold; color: white;">${icon}</span>
-          <strong style="font-size: 13.5px; color: var(--text);">${escHtml(item.topic || 'Category')}</strong>
+          <strong style="font-size: 13.5px; color: var(--text);">${item.topic || 'Category'}</strong>
           <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; opacity: 0.8;" class="${item.status === 'contradiction' ? 'text-danger' : item.status === 'partial' ? 'text-warning' : 'text-success'}">${item.status}</span>
         </div>
-        <p style="margin: 4px 0 0 28px; font-size: 13px; color: var(--text-2); line-height: 1.45;">${escHtml(item.explanation || '')}</p>
+        <p style="margin: 4px 0 0 28px; font-size: 13px; color: var(--text-2); line-height: 1.45;">${item.explanation || ''}</p>
       `;
       listEl.appendChild(div);
     });
@@ -2341,12 +2341,12 @@ function highlightSelection(containerId, dataKey, color = '#fef08a') {
     return;
   }
 
-  // Capture the closest td if we are in the table, before manipulating the DOM
-  let targetTd = null;
-  if (dataKey === 'table') {
+  // Capture the closest relevant element before manipulating the DOM
+  let targetElement = null;
+  if (dataKey === 'table' || dataKey === 'agreement') {
     let node = range.commonAncestorContainer;
     if (node.nodeType === 3) node = node.parentNode;
-    targetTd = node.closest('td');
+    targetElement = dataKey === 'table' ? node.closest('td') : node;
   }
 
   if (color === 'erase') {
@@ -2381,16 +2381,29 @@ function highlightSelection(containerId, dataKey, color = '#fef08a') {
   if (!state.activeComparison) return;
 
   if (dataKey === 'table') {
-    if (targetTd) {
-      const tr = targetTd.closest('tr');
+    if (targetElement) {
+      const tr = targetElement.closest('tr');
       if (tr && tr.cells.length >= 3) {
         const category = tr.cells[0].textContent;
-        const colIndex = Array.from(tr.cells).indexOf(targetTd);
+        const colIndex = Array.from(tr.cells).indexOf(targetElement);
         if (colIndex === 1) {
-          state.activeComparison.comparison_data.table[category].paper_a = targetTd.innerHTML;
+          state.activeComparison.comparison_data.table[category].paper_a = targetElement.innerHTML;
         } else if (colIndex === 2) {
-          state.activeComparison.comparison_data.table[category].paper_b = targetTd.innerHTML;
+          state.activeComparison.comparison_data.table[category].paper_b = targetElement.innerHTML;
         }
+      }
+    }
+  } else if (dataKey === 'agreement') {
+    // If highlighting inside an agreement item, we find which one and update the explanation and topic
+    const targetNode = color === 'erase' ? targetElement : mark;
+    const itemDiv = targetNode ? targetNode.closest('.agreement-item') : null;
+    if (itemDiv) {
+      const index = Array.from(itemDiv.parentNode.children).indexOf(itemDiv);
+      if (index > -1 && state.activeComparison.comparison_data.agreement[index]) {
+        const p = itemDiv.querySelector('p');
+        const strong = itemDiv.querySelector('strong');
+        if (p) state.activeComparison.comparison_data.agreement[index].explanation = p.innerHTML;
+        if (strong) state.activeComparison.comparison_data.agreement[index].topic = strong.innerHTML;
       }
     }
   } else {
@@ -2457,8 +2470,8 @@ function exportComparisonText() {
   text += `--- AGREEMENT & CONTRADICTION INDICATORS ---\n`;
   if (data.agreement && Array.isArray(data.agreement)) {
     data.agreement.forEach(item => {
-      text += `* Topic: ${item.topic} | Status: ${item.status.toUpperCase()}\n`;
-      text += `  Explanation: ${item.explanation}\n`;
+      text += `* Topic: ${stripHtml(item.topic)} | Status: ${item.status.toUpperCase()}\n`;
+      text += `  Explanation: ${stripHtml(item.explanation)}\n`;
     });
   }
 

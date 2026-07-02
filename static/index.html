@@ -1042,7 +1042,19 @@
 
             <!-- Agreement Indicators Card -->
             <div class="comparison-section-card" style="margin-top: 24px; margin-bottom: 32px;">
-              <h3>Agreement & Contradiction Indicators</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Agreement & Contradiction Indicators</h3>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-agreement-list', 'agreement', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-agreement-list', 'agreement', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-agreement-list', 'agreement', '#bfdbfe')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bfdbfe; border: 1px solid #d4d4d8; cursor: pointer;" title="Blue"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-agreement-list', 'agreement', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-agreement-list', 'agreement', 'erase')" style="padding: 2px; border-radius: 50%; width: 20px; height: 20px; background-color: #ffffff; border: 1px dashed #d4d4d8; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 4px;" title="Eraser">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><path d="M18 13l-6 6-8-8 6-6z"></path><path d="M12 19h9"></path></svg>
+                  </button>
+                </div>
+              </div>
               <div class="agreement-list" id="comparison-agreement-list" style="margin-top: 12px; display: flex; flex-direction: column; gap: 12px;">
                 <!-- Agreement items -->
               </div>
@@ -1251,6 +1263,6 @@
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="static/js/app.js?v=40"></script>
+  <script src="static/js/app.js?v=41"></script>
 </body>
 </html>
