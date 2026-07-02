@@ -59,18 +59,21 @@ async def list_papers(
         )
 
     # Sorting
+    # We use a tuple for the sorting criteria so we can pass multiple order_by clauses to SQLAlchemy
     sort_map = {
-        "created_at": ResearchPaper.created_at.desc(),
-        "title": func.lower(ResearchPaper.title).asc(),
-        "author": func.lower(ResearchPaper.authors).asc(),
-        "year_desc": ResearchPaper.year.desc(),
-        "year_asc": ResearchPaper.year.asc(),
-        "pages_desc": ResearchPaper.page_count.desc(),
-        "pages_asc": ResearchPaper.page_count.asc(),
-        "read_count": ResearchPaper.read_count.desc(),
-        "last_opened": ResearchPaper.last_opened.desc(),
+        "created_at": (ResearchPaper.created_at.desc(),),
+        "title": (func.lower(ResearchPaper.title).asc(), ResearchPaper.created_at.desc()),
+        "author": (func.lower(ResearchPaper.authors).asc(), ResearchPaper.created_at.desc()),
+        "year_desc": (ResearchPaper.year.desc().nullslast(), ResearchPaper.created_at.desc()),
+        "year_asc": (ResearchPaper.year.asc().nullsfirst(), ResearchPaper.created_at.desc()),
+        "pages_desc": (ResearchPaper.page_count.desc().nullslast(), ResearchPaper.created_at.desc()),
+        "pages_asc": (ResearchPaper.page_count.asc().nullsfirst(), ResearchPaper.created_at.desc()),
+        "read_count": (ResearchPaper.read_count.desc(), ResearchPaper.created_at.desc()),
+        "last_opened": (ResearchPaper.last_opened.desc().nullslast(), ResearchPaper.created_at.desc()),
     }
-    query = query.order_by(sort_map.get(sort, ResearchPaper.created_at.desc()))
+    
+    sort_criteria = sort_map.get(sort, (ResearchPaper.created_at.desc(),))
+    query = query.order_by(*sort_criteria)
 
     result = await db.execute(query)
     papers = result.scalars().all()
