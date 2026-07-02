@@ -968,7 +968,15 @@
           <div id="comparison-result-area" class="comparison-result-area" style="display:none;">
             <!-- Side-by-Side Table Card -->
             <div class="comparison-section-card">
-              <h3>Side-by-Side Comparison</h3>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Side-by-Side Comparison</h3>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-table-element', 'table', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-table-element', 'table', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-table-element', 'table', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                </div>
+              </div>
               <div class="table-responsive" style="overflow-x: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border);">
                 <table class="comparison-table" id="comparison-table-element">
                   <thead>
@@ -989,9 +997,12 @@
             <div class="comparison-section-card" style="margin-top: 24px;">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3>AI Narrative Synthesis</h3>
-                <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative')" style="padding: 4px 10px; font-size: 12px; gap: 4px; display: flex; align-items: center;">
-                  🖍️ Highlight
-                </button>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                </div>
               </div>
               <div class="comparison-narrative-text" id="comparison-narrative-text" style="line-height: 1.6; font-size: 14.5px; color: var(--text); white-space: pre-wrap; margin-top: 12px;">
                 <!-- Narrative text here -->
@@ -1005,9 +1016,12 @@
                   <span class="evidence-icon" style="font-size: 18px;">🛡️</span>
                   <h3 style="margin: 0;">Evidence Confidence & Critique</h3>
                 </div>
-                <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence')" style="padding: 4px 10px; font-size: 12px; gap: 4px; display: flex; align-items: center;">
-                  🖍️ Highlight
-                </button>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                </div>
               </div>
               <div class="evidence-body" id="comparison-evidence-body" style="line-height: 1.6; font-size: 14px; color: var(--text-2); margin-top: 12px; white-space: pre-wrap;">
                 <!-- Evidence confidence text -->
@@ -1225,6 +1239,6 @@
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="static/js/app.js?v=37"></script>
+  <script src="static/js/app.js?v=38"></script>
 </body>
 </html>

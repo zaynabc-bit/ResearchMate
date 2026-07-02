@@ -2231,8 +2231,8 @@ function renderActiveComparison(comp) {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td style="font-weight: 600; color: var(--text); background: var(--glass);">${escHtml(category)}</td>
-        <td style="color: var(--text-2);">${escHtml(row.paper_a || 'N/A')}</td>
-        <td style="color: var(--text-2);">${escHtml(row.paper_b || 'N/A')}</td>
+        <td style="color: var(--text-2);">${row.paper_a || 'N/A'}</td>
+        <td style="color: var(--text-2);">${row.paper_b || 'N/A'}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -2328,7 +2328,7 @@ function saveActiveComparison(isAutoSave = false) {
   });
 }
 
-function highlightSelection(containerId, dataKey) {
+function highlightSelection(containerId, dataKey, color = '#fef08a') {
   const selection = window.getSelection();
   if (!selection.rangeCount) return;
 
@@ -2342,7 +2342,7 @@ function highlightSelection(containerId, dataKey) {
   }
 
   const mark = document.createElement('mark');
-  mark.style.backgroundColor = '#fef08a';
+  mark.style.backgroundColor = color;
   mark.style.color = 'inherit';
   mark.style.padding = '2px 0';
   mark.style.borderRadius = '3px';
@@ -2357,7 +2357,24 @@ function highlightSelection(containerId, dataKey) {
   selection.removeAllRanges();
   if (!state.activeComparison) return;
 
-  state.activeComparison.comparison_data[dataKey] = container.innerHTML;
+  if (dataKey === 'table') {
+    // If highlighting inside the table, we must find which cell was updated
+    const td = mark.closest('td');
+    if (td) {
+      const tr = td.closest('tr');
+      if (tr && tr.cells.length >= 3) {
+        const category = tr.cells[0].textContent;
+        const colIndex = Array.from(tr.cells).indexOf(td);
+        if (colIndex === 1) {
+          state.activeComparison.comparison_data.table[category].paper_a = td.innerHTML;
+        } else if (colIndex === 2) {
+          state.activeComparison.comparison_data.table[category].paper_b = td.innerHTML;
+        }
+      }
+    }
+  } else {
+    state.activeComparison.comparison_data[dataKey] = container.innerHTML;
+  }
 
   if (state.activeComparison.id) {
     fetch(`/api/comparisons/${state.activeComparison.id}/data`, {
