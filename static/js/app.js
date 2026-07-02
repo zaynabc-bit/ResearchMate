@@ -2243,8 +2243,8 @@ function renderActiveComparison(comp) {
 
   // Evidence
   let confText = data.confidence;
-  if (typeof confText === 'object' && confText !== null) {
-    confText = Object.values(confText).filter(v => typeof v === 'string').join('\n\n').trim() || null;
+  if (typeof confText !== 'string' || !confText.trim()) {
+    confText = null;
   }
   document.getElementById('comparison-evidence-body').textContent = confText || 'No evidence critique available for this comparison.';
 
@@ -2362,8 +2362,8 @@ function exportComparisonText() {
   text += `${data.narrative || 'N/A'}\n\n`;
 
   let exportConfText = data.confidence;
-  if (typeof exportConfText === 'object' && exportConfText !== null) {
-    exportConfText = Object.values(exportConfText).filter(v => typeof v === 'string').join('\n\n').trim() || null;
+  if (typeof exportConfText !== 'string' || !exportConfText.trim()) {
+    exportConfText = null;
   }
 
   text += `--- EVIDENCE CONFIDENCE & CRITIQUE ---\n`;
