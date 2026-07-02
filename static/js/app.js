@@ -2481,7 +2481,7 @@ function renderComparisonsList() {
       <div class="paper-card" onclick="openSavedComparison('${c.id}')" style="animation-delay:${i * 0.04}s">
         <div class="card-icon" style="color: var(--primary);">VS</div>
         <div class="card-title">${escHtml(c.title)}</div>
-        <div class="card-authors" style="font-size:12px; margin-top:4px;">
+        <div class="card-authors" style="font-size:12px; margin-top:4px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
           Comparing: <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_a_title)}</span> vs <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_b_title)}</span>
         </div>
         <div class="card-meta" style="margin-top:12px;">
