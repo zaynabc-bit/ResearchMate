@@ -617,12 +617,7 @@ function renderPapers() {
     html += state.favouriteComparisons.map((c, i) => renderComparisonCardHTML(c, startIndex + i)).join('');
   }
 
-  grid.innerHTML = html;</div>
-      </div>
-
-    </div>
-    `;
-  }).join('');
+  grid.innerHTML = html;
 }
 
 function getFolderBadge(folderId) {
