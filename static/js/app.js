@@ -2321,7 +2321,6 @@ function saveActiveComparison(isAutoSave = false) {
     updateCompareButtonState();
     loadPapers();
   })
-  })
   .catch(err => {
     if (!isAutoSave) {
       showToast(err.message, 'error');
