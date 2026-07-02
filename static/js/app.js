@@ -2479,7 +2479,7 @@ function renderComparisonsList() {
   grid.innerHTML = filtered.map((c, i) => {
     return `
       <div class="paper-card" onclick="openSavedComparison('${c.id}')" style="animation-delay:${i * 0.04}s">
-        <div class="card-icon" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">VS</div>
+        <div class="card-icon" style="color: var(--primary);">VS</div>
         <div class="card-title">${escHtml(c.title)}</div>
         <div class="card-authors" style="font-size:12px; margin-top:4px;">
           Comparing: <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_a_title)}</span> vs <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_b_title)}</span>
