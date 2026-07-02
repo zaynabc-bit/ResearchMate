@@ -2242,7 +2242,11 @@ function renderActiveComparison(comp) {
   document.getElementById('comparison-narrative-text').textContent = data.narrative || 'No narrative synthesis available.';
 
   // Evidence
-  document.getElementById('comparison-evidence-body').textContent = data.confidence || 'No evidence critique available.';
+  let confText = data.confidence;
+  if (typeof confText === 'object' && confText !== null) {
+    confText = Object.values(confText).filter(v => typeof v === 'string').join('\n\n').trim() || null;
+  }
+  document.getElementById('comparison-evidence-body').textContent = confText || 'No evidence critique available for this comparison.';
 
   // Agreement
   const listEl = document.getElementById('comparison-agreement-list');
@@ -2357,8 +2361,13 @@ function exportComparisonText() {
   text += `\n\n--- AI NARRATIVE SYNTHESIS ---\n`;
   text += `${data.narrative || 'N/A'}\n\n`;
 
+  let exportConfText = data.confidence;
+  if (typeof exportConfText === 'object' && exportConfText !== null) {
+    exportConfText = Object.values(exportConfText).filter(v => typeof v === 'string').join('\n\n').trim() || null;
+  }
+
   text += `--- EVIDENCE CONFIDENCE & CRITIQUE ---\n`;
-  text += `${data.confidence || 'N/A'}\n\n`;
+  text += `${exportConfText || 'No evidence critique available for this comparison.'}\n\n`;
 
   text += `--- AGREEMENT & CONTRADICTION INDICATORS ---\n`;
   if (data.agreement && Array.isArray(data.agreement)) {
