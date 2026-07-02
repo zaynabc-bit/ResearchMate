@@ -110,8 +110,8 @@ async def summarise_paper(
         mode = request.mode or "fast"
 
         # Build embeddings in background while summarising (lazy init)
-        embed_ok = await check_embed_available()
-        if embed_ok and not await has_chunks(paper_id, db):
+        # Build chunks in background while summarising (lazy init)
+        if not await has_chunks(paper_id, db):
             print(f"[Embed] Building chunks for paper {paper_id} during summarise...")
             await build_paper_chunks(paper_id, paper.extracted_text, db)
 
@@ -208,16 +208,14 @@ async def global_chat(
         try:
             # 0. On-the-fly auto-indexing for any papers without chunks
             from app.models.paper import ResearchPaper
-            from app.services.embedding_service import has_chunks, build_paper_chunks, check_embed_available
+            from app.services.embedding_service import has_chunks, build_paper_chunks
             
-            embed_ok = await check_embed_available()
-            if embed_ok:
-                result = await db.execute(select(ResearchPaper).where(ResearchPaper.user_id == user_id))
-                all_papers = result.scalars().all()
-                for p in all_papers:
-                    if p.extracted_text and not await has_chunks(p.id, db):
-                        print(f"[Global RAG] Auto-indexing paper {p.id} on query...")
-                        await build_paper_chunks(p.id, p.extracted_text, db)
+            result = await db.execute(select(ResearchPaper).where(ResearchPaper.user_id == user_id))
+            all_papers = result.scalars().all()
+            for p in all_papers:
+                if p.extracted_text and not await has_chunks(p.id, db):
+                    print(f"[Global RAG] Auto-indexing paper {p.id} on query...")
+                    await build_paper_chunks(p.id, p.extracted_text, db)
 
             # 1. Retrieve global relevant chunks
             from app.services.embedding_service import retrieve_global_relevant_chunks
