@@ -61,8 +61,9 @@ async def list_papers(
     # Sorting
     sort_map = {
         "created_at": ResearchPaper.created_at.desc(),
-        "title": ResearchPaper.title.asc(),
+        "title": func.lower(ResearchPaper.title).asc(),
         "year": ResearchPaper.year.desc(),
+        "pages": ResearchPaper.page_count.desc(),
     }
     query = query.order_by(sort_map.get(sort, ResearchPaper.created_at.desc()))
 
