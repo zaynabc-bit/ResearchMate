@@ -2341,17 +2341,32 @@ function highlightSelection(containerId, dataKey, color = '#fef08a') {
     return;
   }
 
-  const mark = document.createElement('mark');
-  mark.style.backgroundColor = color;
-  mark.style.color = 'inherit';
-  mark.style.padding = '2px 0';
-  mark.style.borderRadius = '3px';
+  if (color === 'erase') {
+    let node = range.commonAncestorContainer;
+    if (node.nodeType === 3) node = node.parentNode;
+    
+    const mark = node.closest('mark');
+    if (mark) {
+      const parent = mark.parentNode;
+      while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+      parent.removeChild(mark);
+    } else {
+      showToast('Please select text inside an existing highlight to erase it.', 'info');
+      return;
+    }
+  } else {
+    const mark = document.createElement('mark');
+    mark.style.backgroundColor = color;
+    mark.style.color = 'inherit';
+    mark.style.padding = '2px 0';
+    mark.style.borderRadius = '3px';
 
-  try {
-    range.surroundContents(mark);
-  } catch (e) {
-    showToast('Cannot highlight across multiple elements. Try a smaller selection.', 'error');
-    return;
+    try {
+      range.surroundContents(mark);
+    } catch (e) {
+      showToast('Cannot highlight across multiple elements. Try a smaller selection.', 'error');
+      return;
+    }
   }
 
   selection.removeAllRanges();

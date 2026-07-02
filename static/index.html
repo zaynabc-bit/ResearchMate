@@ -972,9 +972,12 @@
                 <h3>Side-by-Side Comparison</h3>
                 <div style="display: flex; gap: 4px; align-items: center;">
                   <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-table-element', 'table', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-table-element', 'table', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-table-element', 'table', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-table-element', 'table', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-table-element', 'table', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-table-element', 'table', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-table-element', 'table', 'erase')" style="padding: 2px; border-radius: 50%; width: 20px; height: 20px; background-color: #ffffff; border: 1px dashed #d4d4d8; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 4px;" title="Eraser">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><path d="M18 13l-6 6-8-8 6-6z"></path><path d="M12 19h9"></path></svg>
+                  </button>
                 </div>
               </div>
               <div class="table-responsive" style="overflow-x: auto; margin-top: 12px; border-radius: 8px; border: 1px solid var(--border);">
@@ -999,9 +1002,12 @@
                 <h3>AI Narrative Synthesis</h3>
                 <div style="display: flex; gap: 4px; align-items: center;">
                   <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-narrative-text', 'narrative', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-narrative-text', 'narrative', 'erase')" style="padding: 2px; border-radius: 50%; width: 20px; height: 20px; background-color: #ffffff; border: 1px dashed #d4d4d8; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 4px;" title="Eraser">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><path d="M18 13l-6 6-8-8 6-6z"></path><path d="M12 19h9"></path></svg>
+                  </button>
                 </div>
               </div>
               <div class="comparison-narrative-text" id="comparison-narrative-text" style="line-height: 1.6; font-size: 14.5px; color: var(--text); white-space: pre-wrap; margin-top: 12px;">
@@ -1018,9 +1024,12 @@
                 </div>
                 <div style="display: flex; gap: 4px; align-items: center;">
                   <span style="font-size: 11px; color: var(--text-2); margin-right: 4px;">Highlighter:</span>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
-                  <button class="btn-secondary" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#fef08a')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fef08a; border: 1px solid #d4d4d8; cursor: pointer;" title="Yellow"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#bbf7d0')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #bbf7d0; border: 1px solid #d4d4d8; cursor: pointer;" title="Green"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-evidence-body', 'confidence', '#fbcfe8')" style="padding: 4px; border-radius: 50%; width: 20px; height: 20px; background-color: #fbcfe8; border: 1px solid #d4d4d8; cursor: pointer;" title="Pink"></button>
+                  <button class="btn-secondary highlighter-btn" onclick="highlightSelection('comparison-evidence-body', 'confidence', 'erase')" style="padding: 2px; border-radius: 50%; width: 20px; height: 20px; background-color: #ffffff; border: 1px dashed #d4d4d8; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: 4px;" title="Eraser">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2"><path d="M18 13l-6 6-8-8 6-6z"></path><path d="M12 19h9"></path></svg>
+                  </button>
                 </div>
               </div>
               <div class="evidence-body" id="comparison-evidence-body" style="line-height: 1.6; font-size: 14px; color: var(--text-2); margin-top: 12px; white-space: pre-wrap;">
@@ -1239,6 +1248,6 @@
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <script src="static/js/app.js?v=38"></script>
+  <script src="static/js/app.js?v=39"></script>
 </body>
 </html>
