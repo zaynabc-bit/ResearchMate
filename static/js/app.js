@@ -520,6 +520,15 @@ async function loadPapers() {
 
     const res = await fetch(url);
     state.papers = await res.json();
+    
+    if (state.currentView === 'favourites') {
+      const compRes = await fetch('/api/comparisons/');
+      const allComps = await compRes.json();
+      state.favouriteComparisons = allComps.filter(c => c.is_favourite);
+    } else {
+      state.favouriteComparisons = [];
+    }
+
     renderPapers();
     updateBadges();
     updateHomeDashboard();
@@ -541,7 +550,7 @@ function renderPapers() {
   grid.style.display = 'grid';
   empty.style.display = 'none';
 
-  grid.innerHTML = state.papers.map((p, i) => {
+  let html = state.papers.map((p, i) => {
     const ext = p.file_url ? p.file_url.substring(p.file_url.lastIndexOf('.')).toLowerCase() : '';
     let docType = 'PDF';
     if (ext === '.docx') docType = 'DOCX';
@@ -598,6 +607,17 @@ function renderPapers() {
             🗑 Delete
           </button>
         </div>
+      </div>
+    </div>
+    `;
+  }).join('');
+
+  if (state.currentView === 'favourites' && state.favouriteComparisons && state.favouriteComparisons.length > 0) {
+    const startIndex = state.papers.length;
+    html += state.favouriteComparisons.map((c, i) => renderComparisonCardHTML(c, startIndex + i)).join('');
+  }
+
+  grid.innerHTML = html;</div>
       </div>
 
     </div>
@@ -2465,6 +2485,35 @@ function loadComparisons() {
     });
 }
 
+function renderComparisonCardHTML(c, i = 0) {
+  return `
+    <div class="paper-card" onclick="openSavedComparison('${c.id}')" style="animation-delay:${i * 0.04}s">
+      <div class="card-icon" style="color: var(--primary);">VS</div>
+      <div class="card-title">${escHtml(c.title)}</div>
+      <div class="card-authors" style="font-size:12px; margin-top:4px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+        Comparing: <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_a_title)}</span> vs <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_b_title)}</span>
+      </div>
+      <div class="card-meta" style="margin-top:12px;">
+        <span class="card-date">${formatDate(c.created_at)}</span>
+      </div>
+      <div class="card-footer" style="margin-top: 12px; justify-content: space-between;">
+        <button class="card-action-btn ${c.is_favourite ? 'card-action-fave-active' : ''}" onclick="event.stopPropagation(); toggleComparisonFavourite('${c.id}')" title="Favourite">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${c.is_favourite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          ${c.is_favourite ? 'Favourited' : 'Favourite'}
+        </button>
+        <div style="display:flex; gap:8px;">
+          <button class="card-action-btn" onclick="event.stopPropagation(); renameComparison('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
+            ✏️ Edit
+          </button>
+          <button class="card-action-btn card-action-danger-btn" onclick="event.stopPropagation(); deleteComparisonById('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
+            🗑 Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderComparisonsList() {
   const grid = document.getElementById('comparisons-grid');
   const empty = document.getElementById('comparisons-empty-state');
@@ -2485,34 +2534,7 @@ function renderComparisonsList() {
   grid.style.display = 'grid';
   empty.style.display = 'none';
 
-  grid.innerHTML = filtered.map((c, i) => {
-    return `
-      <div class="paper-card" onclick="openSavedComparison('${c.id}')" style="animation-delay:${i * 0.04}s">
-        <div class="card-icon" style="color: var(--primary);">VS</div>
-        <div class="card-title">${escHtml(c.title)}</div>
-        <div class="card-authors" style="font-size:12px; margin-top:4px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
-          Comparing: <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_a_title)}</span> vs <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_b_title)}</span>
-        </div>
-        <div class="card-meta" style="margin-top:12px;">
-          <span class="card-date">${formatDate(c.created_at)}</span>
-        </div>
-        <div class="card-footer" style="margin-top: 12px; justify-content: space-between;">
-          <button class="card-action-btn ${c.is_favourite ? 'card-action-fave-active' : ''}" onclick="event.stopPropagation(); toggleComparisonFavourite('${c.id}')" title="Favourite">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="${c.is_favourite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            ${c.is_favourite ? 'Favourited' : 'Favourite'}
-          </button>
-          <div style="display:flex; gap:8px;">
-            <button class="card-action-btn" onclick="event.stopPropagation(); renameComparison('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
-              ✏️ Edit
-            </button>
-            <button class="card-action-btn card-action-danger-btn" onclick="event.stopPropagation(); deleteComparisonById('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
-              🗑 Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
+  grid.innerHTML = filtered.map((c, i) => renderComparisonCardHTML(c, i)).join('');
 }
 
 function openSavedComparison(id) {
@@ -2587,24 +2609,48 @@ function renameComparison(id, oldTitle) {
 }
 
 function toggleComparisonFavourite(id) {
-  const comp = state.comparisons.find(c => c.id === id);
-  if (!comp) return;
+  let comp = state.comparisons ? state.comparisons.find(c => c.id === id) : null;
+  let favComp = state.favouriteComparisons ? state.favouriteComparisons.find(c => c.id === id) : null;
+  
+  if (!comp && !favComp) return;
 
-  const newState = !comp.is_favourite;
-  comp.is_favourite = newState;
-  renderComparisonsList(); // Optimistic update
+  const targetComp = comp || favComp;
+  const newState = !targetComp.is_favourite;
+  
+  if (comp) comp.is_favourite = newState;
+  if (favComp) favComp.is_favourite = newState;
+
+  if (state.currentView === 'favourites') {
+    if (!newState && state.favouriteComparisons) {
+      state.favouriteComparisons = state.favouriteComparisons.filter(c => c.id !== id);
+    }
+    renderPapers();
+  }
+  
+  if (state.comparisons) {
+    renderComparisonsList();
+  }
 
   fetch(`/api/comparisons/${id}/favourite`, { method: 'PUT' })
     .then(res => res.json())
     .then(data => {
       if (data.status === 'success') {
-        comp.is_favourite = data.is_favourite;
-        renderComparisonsList();
+        if (comp) comp.is_favourite = data.is_favourite;
+        if (favComp) favComp.is_favourite = data.is_favourite;
+        showToast(data.is_favourite ? '⭐ Added to favourites' : 'Removed from favourites', 'info');
+      } else {
+        if (comp) comp.is_favourite = !newState;
+        if (favComp) favComp.is_favourite = !newState;
+        if (state.currentView === 'favourites') loadPapers();
+        else if (state.comparisons) renderComparisonsList();
+        showToast('Failed to update favourite status', 'error');
       }
     })
     .catch(err => {
-      comp.is_favourite = !newState;
-      renderComparisonsList();
+      if (comp) comp.is_favourite = !newState;
+      if (favComp) favComp.is_favourite = !newState;
+      if (state.currentView === 'favourites') loadPapers();
+      else if (state.comparisons) renderComparisonsList();
       showToast('Failed to update favourite status', 'error');
     });
 }
