@@ -63,8 +63,12 @@ async def list_papers(
         "created_at": ResearchPaper.created_at.desc(),
         "title": func.lower(ResearchPaper.title).asc(),
         "author": func.lower(ResearchPaper.authors).asc(),
-        "year": ResearchPaper.year.desc(),
-        "pages": ResearchPaper.page_count.desc(),
+        "year_desc": ResearchPaper.year.desc(),
+        "year_asc": ResearchPaper.year.asc(),
+        "pages_desc": ResearchPaper.page_count.desc(),
+        "pages_asc": ResearchPaper.page_count.asc(),
+        "read_count": ResearchPaper.read_count.desc(),
+        "last_opened": ResearchPaper.last_opened.desc(),
     }
     query = query.order_by(sort_map.get(sort, ResearchPaper.created_at.desc()))
 
@@ -236,6 +240,12 @@ async def get_paper(paper_id: str, db: AsyncSession = Depends(get_db), user_id: 
     paper = result.scalar_one_or_none()
     if not paper:
         raise HTTPException(status_code=404, detail="Paper not found")
+        
+    paper.read_count = (paper.read_count or 0) + 1
+    paper.last_opened = func.now()
+    await db.commit()
+    await db.refresh(paper)
+    
     return paper
 
 

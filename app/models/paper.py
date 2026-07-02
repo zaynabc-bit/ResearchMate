@@ -10,6 +10,7 @@ class ResearchPaper(Base):
     __tablename__ = "papers"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=False, index=True)
     title = Column(String, nullable=False)
     authors = Column(String, nullable=True)
     journal = Column(String, nullable=True)
@@ -43,3 +44,5 @@ class ResearchPaper(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    read_count = Column(Integer, default=0)
+    last_opened = Column(DateTime(timezone=True), nullable=True)
