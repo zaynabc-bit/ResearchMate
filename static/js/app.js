@@ -2484,18 +2484,26 @@ function renderComparisonCardHTML(c, i = 0) {
   return `
     <div class="paper-card" onclick="openSavedComparison('${c.id}')" style="animation-delay:${i * 0.04}s">
       <div class="card-icon" style="color: var(--primary);">VS</div>
-      <div class="card-title">${escHtml(c.title)}</div>
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 4px;">
+        <div class="card-title" style="margin: 0; flex: 1;">${escHtml(c.title)}</div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <button class="card-fav-btn ${c.is_favourite ? 'starred' : ''}"
+            onclick="event.stopPropagation(); toggleComparisonFavourite('${c.id}')"
+            title="${c.is_favourite ? 'Remove from favourites' : 'Add to favourites'}"
+            style="position: static; padding: 2px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="${c.is_favourite ? 'currentColor' : 'none'}">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
       <div class="card-authors" style="font-size:12px; margin-top:4px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
         Comparing: <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_a_title)}</span> vs <span style="font-weight: 500; color:var(--text-2);">${escHtml(c.paper_b_title)}</span>
       </div>
       <div class="card-meta" style="margin-top:12px;">
         <span class="card-date">${formatDate(c.created_at)}</span>
       </div>
-      <div class="card-footer" style="margin-top: 12px; justify-content: space-between;">
-        <button class="card-action-btn ${c.is_favourite ? 'card-action-fave-active' : ''}" onclick="event.stopPropagation(); toggleComparisonFavourite('${c.id}')" title="Favourite">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="${c.is_favourite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          ${c.is_favourite ? 'Favourited' : 'Favourite'}
-        </button>
+      <div class="card-footer" style="margin-top: 12px; justify-content: flex-end;">
         <div style="display:flex; gap:8px;">
           <button class="card-action-btn" onclick="event.stopPropagation(); renameComparison('${c.id}', '${escHtml(c.title).replace(/'/g, "\\'")}')">
             ✏️ Edit
