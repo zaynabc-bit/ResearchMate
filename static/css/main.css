@@ -2674,3 +2674,38 @@ body.unauthenticated .main-content {
     height: 60vh;
   }
 }
+
+/* Books Styles */
+.book-nav-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.book-nav-btn:hover {
+  background: #f3f4f6;
+  color: #111;
+}
+.book-nav-btn.active {
+  background: #f3f4f6;
+  color: #111;
+  font-weight: 600;
+}
+.book-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.book-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.05);
+}

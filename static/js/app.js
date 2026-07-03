@@ -81,7 +81,9 @@ const state = {
   selectedPaperIds: [],
   comparisons: [],
   activeComparison: null,
-  synthesisHistory: []
+  synthesisHistory: [],
+  books: [],
+  currentBook: null
 };
 
 const FOLDER_COLOURS = [
@@ -702,6 +704,11 @@ function navigateTo(view) {
     synthNav.classList.toggle('active', view === 'synthesis-studio');
   }
 
+  const booksNav = document.getElementById('nav-books');
+  if (booksNav) {
+    booksNav.classList.toggle('active', view === 'books');
+  }
+
   if (view === 'home') {
     switchView('home');
     updateHomeDashboard();
@@ -728,6 +735,10 @@ function navigateTo(view) {
     switchView('synthesis-studio');
     loadSynthesisLibraryPapers();
     loadSynthesisHistory();
+  } else if (view === 'books') {
+    switchView('books');
+    document.getElementById('page-title').textContent = '📘 Books';
+    loadBooks();
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
@@ -1560,7 +1571,7 @@ function updateAIBadge() {
 // ============================================
 function switchView(view) {
   // All possible view IDs
-  const allViews = ['view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active', 'view-web-references', 'view-rewrite-studio'];
+  const allViews = ['view-home', 'view-library', 'view-detail', 'view-global-chat', 'view-settings', 'view-comparisons', 'view-comparison-active', 'view-web-references', 'view-rewrite-studio', 'view-books', 'view-book-workspace'];
   allViews.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
@@ -1568,7 +1579,7 @@ function switchView(view) {
 
   const target = document.getElementById('view-' + view);
   if (target) {
-    if (view === 'home' || view === 'settings' || view === 'comparisons' || view === 'web-references') {
+    if (view === 'home' || view === 'settings' || view === 'comparisons' || view === 'web-references' || view === 'books') {
       target.style.display = 'block';
     } else {
       target.style.display = 'flex';
@@ -3316,4 +3327,127 @@ async function deleteSynthesis(id) {
     console.error(err);
     showToast("Failed to delete report", "error");
   }
+}
+
+// ============================================
+// BOOKS
+// ============================================
+
+async function uploadBook(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!session) return openAuthModal('login');
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    showToast("Uploading book...", "info");
+    const res = await fetch('/api/books/upload', {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error("Upload failed");
+    showToast("Book uploaded and processing in background", "success");
+    event.target.value = '';
+    loadBooks();
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function loadBooks() {
+  if (!session) return;
+  try {
+    const res = await fetch('/api/books');
+    if (!res.ok) throw new Error("Failed to load books");
+    state.books = await res.json();
+    renderBooks();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderBooks() {
+  const grid = document.getElementById('books-grid');
+  if (!grid) return;
+
+  if (state.books.length === 0) {
+    grid.innerHTML = '<div style="color: var(--text-2); padding: 24px;">No books imported yet. Upload a PDF textbook to begin.</div>';
+    return;
+  }
+
+  grid.innerHTML = state.books.map(b => `
+    <div class="book-card" onclick="openBookWorkspace('${b.id}')">
+      <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 8px;">${escHtml(b.title)}</h3>
+      ${b.author ? `<div style="font-size: 13px; color: var(--text-2); margin-bottom: 12px;">${escHtml(b.author)}</div>` : ''}
+      <div style="font-size: 12px; font-weight: 500; color: ${b.processing_status === 'done' ? 'var(--primary)' : 'var(--text-3)'};">
+        ${b.processing_status === 'done' ? 'Ready' : `Processing: ${b.progress_percent}%`}
+      </div>
+      <button onclick="event.stopPropagation(); deleteBook('${b.id}')" style="margin-top: 12px; background: none; border: none; color: #ef4444; font-size: 12px; cursor: pointer; padding: 0;">Delete</button>
+    </div>
+  `).join('');
+}
+
+async function deleteBook(id) {
+  if (!confirm("Delete this book?")) return;
+  try {
+    const res = await fetch(`/api/books/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Failed");
+    loadBooks();
+  } catch (err) {
+    showToast("Delete failed", "error");
+  }
+}
+
+async function openBookWorkspace(id) {
+  showToast("Loading workspace...", "info");
+  try {
+    const res = await fetch(`/api/books/${id}`);
+    if (!res.ok) throw new Error("Failed to load book workspace");
+    state.currentBook = await res.json();
+    
+    document.getElementById('workspace-book-title').textContent = state.currentBook.title;
+    document.getElementById('book-exec-summary').textContent = state.currentBook.overall_summary || (state.currentBook.processing_status === 'done' ? "No summary generated." : `Processing... ${state.currentBook.progress_percent}%`);
+    
+    // Render chapters
+    const chList = document.getElementById('book-chapters-list');
+    if (state.currentBook.chapters && state.currentBook.chapters.length > 0) {
+      chList.innerHTML = state.currentBook.chapters.map(ch => `
+        <div style="background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+          <h3 style="font-size: 18px; font-weight: 700; color: #111; margin-bottom: 12px;">${escHtml(ch.title)}</h3>
+          <div style="font-size: 15px; line-height: 1.6; color: #444;">${marked.parse(ch.summary || "Summary pending...")}</div>
+        </div>
+      `).join('');
+    } else {
+      chList.innerHTML = '<div style="color: #666;">No chapters extracted yet.</div>';
+    }
+    
+    switchView('book-workspace');
+    switchBookTab('overview');
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+function closeBookWorkspace() {
+  state.currentBook = null;
+  navigateTo('books');
+}
+
+function switchBookTab(tabId) {
+  document.querySelectorAll('.book-nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.book-tab-content').forEach(c => c.style.display = 'none');
+  
+  event.currentTarget.classList.add('active');
+  
+  const content = document.getElementById(`book-tab-${tabId}`);
+  if (content) {
+    content.style.display = tabId === 'chat' ? 'flex' : 'block';
+  }
+}
+
+async function sendBookMessage() {
+  // Coming soon
+  showToast("Book chat is coming in Phase 2!", "info");
 }

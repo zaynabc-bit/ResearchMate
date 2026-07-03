@@ -32,6 +32,7 @@ async def init_db():
         from app.models.folder import Folder  # noqa
         from app.models.chunk import PaperChunk  # noqa
         from app.models.comparison import PaperComparison  # noqa
+        from app.models.book import Book, BookChapter, BookChunk, BookNote, BookStudyTool, BookChatMessage # noqa
         await conn.run_sync(Base.metadata.create_all)
 
         # Auto-migration: add missing columns without dropping data
