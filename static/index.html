@@ -456,9 +456,12 @@
       </div>
 
       <!-- SYNTHESIS STUDIO VIEW -->
-      <div id="view-synthesis-studio" class="view" style="display:none; padding: 32px; max-width: 800px; margin: 0 auto; width: 100%; overflow-y: auto;">
-        <h1 class="view-title" style="margin-bottom: 8px;">Synthesis Studio</h1>
-        <p style="font-size: 14px; color: var(--text-2); margin-bottom: 32px;">Combine multiple sources into a single, cohesive academic document.</p>
+      <div id="view-synthesis-studio" class="view" style="display:none; padding: 32px; max-width: 1200px; margin: 0 auto; width: 100%; overflow-y: auto;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start;">
+          <!-- Left Column: Main Form -->
+          <div>
+            <h1 class="view-title" style="margin-bottom: 8px;">Synthesis Studio</h1>
+            <p style="font-size: 14px; color: var(--text-2); margin-bottom: 32px;">Combine multiple sources into a single, cohesive academic document.</p>
         
         <!-- Source Selection -->
         <div style="margin-bottom: 24px;">
@@ -530,6 +533,18 @@
             </button>
           </div>
           <div id="synthesis-result" class="markdown-body" style="font-size: 14px; line-height: 1.6; color: var(--text);"></div>
+        </div>
+          </div>
+          
+          <!-- Right Column: Recents -->
+          <div style="background: var(--surface); padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-md); position: sticky; top: 32px;">
+            <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text);">Recent Syntheses</h3>
+            <div id="synthesis-history-list" style="display: flex; flex-direction: column; gap: 12px; max-height: calc(100vh - 150px); overflow-y: auto; padding-right: 8px;">
+              <div class="empty-state" style="padding: 24px; text-align: center; color: var(--text-2); background: var(--bg); border-radius: var(--radius);">
+                <p style="font-size: 13px;">No recent syntheses.</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

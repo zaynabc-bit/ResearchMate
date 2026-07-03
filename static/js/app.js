@@ -80,7 +80,8 @@ const state = {
   },
   selectedPaperIds: [],
   comparisons: [],
-  activeComparison: null
+  activeComparison: null,
+  synthesisHistory: []
 };
 
 const FOLDER_COLOURS = [
@@ -726,6 +727,7 @@ function navigateTo(view) {
   } else if (view === 'synthesis-studio') {
     switchView('synthesis-studio');
     loadSynthesisLibraryPapers();
+    loadSynthesisHistory();
   } else if (view === 'global-chat') {
     switchView('global-chat');
     document.getElementById('page-title').textContent = '✨ AI Assistant (Library)';
@@ -3212,6 +3214,11 @@ async function generateSynthesis() {
       titleEl.textContent = data.title;
     }
     
+    // Add to history and render
+    if (!state.synthesisHistory) state.synthesisHistory = [];
+    state.synthesisHistory.unshift(data);
+    renderSynthesisHistory();
+    
     outputContainer.style.display = 'block';
     
     // Scroll to result
@@ -3235,4 +3242,78 @@ function copySynthesis() {
   }).catch(() => {
     showToast("Failed to copy", "error");
   });
+}
+
+async function loadSynthesisHistory() {
+  if (!session) return;
+  try {
+    const res = await fetch('/api/synthesis/history');
+    if (!res.ok) throw new Error('Failed to fetch history');
+    state.synthesisHistory = await res.json();
+    renderSynthesisHistory();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderSynthesisHistory() {
+  const container = document.getElementById('synthesis-history-list');
+  if (!container) return;
+
+  if (!state.synthesisHistory || state.synthesisHistory.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="padding: 24px; text-align: center; color: var(--text-2); background: var(--bg); border-radius: var(--radius);">
+        <p style="font-size: 13px;">No recent syntheses.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = state.synthesisHistory.map(report => `
+    <div class="synthesis-history-card" style="padding: 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: background 0.2s; position: relative;" 
+         onmouseover="this.style.background='var(--bg-1)'" onmouseout="this.style.background='transparent'"
+         onclick="loadHistoricalSynthesis('${report.id}')">
+      <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; padding-right: 24px;">${escHtml(report.title)}</div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span style="font-size: 10px; background: rgba(99,102,241,0.1); color: var(--primary); padding: 2px 6px; border-radius: 4px;">${escHtml(report.style)}</span>
+        <span style="font-size: 11px; color: var(--text-3);">${formatDate(report.created_at)}</span>
+      </div>
+      <button onclick="event.stopPropagation(); deleteSynthesis('${report.id}')" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: var(--text-3); cursor: pointer; padding: 4px;" title="Delete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function loadHistoricalSynthesis(id) {
+  const report = state.synthesisHistory.find(r => r.id === id);
+  if (!report) return;
+
+  const outputContainer = document.getElementById('synthesis-output-container');
+  const resultDiv = document.getElementById('synthesis-result');
+  const titleEl = document.getElementById('synthesis-generated-title');
+
+  if (titleEl) titleEl.textContent = report.title;
+  resultDiv.innerHTML = marked.parse(report.content);
+  outputContainer.style.display = 'block';
+  
+  // Scroll to result smoothly
+  outputContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+async function deleteSynthesis(id) {
+  if (!confirm("Are you sure you want to delete this synthesis report?")) return;
+  try {
+    const res = await fetch(`/api/synthesis/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete report');
+    
+    state.synthesisHistory = state.synthesisHistory.filter(r => r.id !== id);
+    renderSynthesisHistory();
+    
+    document.getElementById('synthesis-output-container').style.display = 'none';
+    
+    showToast("Report deleted", "success");
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to delete report", "error");
+  }
 }

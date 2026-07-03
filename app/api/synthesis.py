@@ -26,17 +26,14 @@ async def generate_report(req: SynthesisRequest, db: AsyncSession = Depends(get_
     
     # 1. Fetch text from selected library papers
     if req.paper_ids:
-        # Get all chunks for the selected papers
-        result = await db.execute(select(PaperChunk).where(PaperChunk.paper_id.in_(req.paper_ids)).order_by(PaperChunk.paper_id, PaperChunk.chunk_index))
-        chunks = result.scalars().all()
+        # Get full text for the selected papers
+        result = await db.execute(select(ResearchPaper).where(ResearchPaper.id.in_(req.paper_ids)))
+        papers = result.scalars().all()
         
-        current_paper_id = None
-        for chunk in chunks:
-            if chunk.paper_id != current_paper_id:
-                # Add a separator and paper title (if available, we could fetch paper title, but for simplicity we just separate chunks)
-                combined_text += f"\n\n--- Source ID: {chunk.paper_id} ---\n\n"
-                current_paper_id = chunk.paper_id
-            combined_text += f"{chunk.text}\n"
+        for paper in papers:
+            if paper.extracted_text:
+                combined_text += f"\n\n--- Source: {paper.title} ---\n\n"
+                combined_text += f"{paper.extracted_text}\n"
 
     # 2. Add manual text
     if req.manual_text:
@@ -98,3 +95,19 @@ async def get_synthesis_history(db: AsyncSession = Depends(get_db), user_id: str
         "style": r.style,
         "created_at": r.created_at
     } for r in reports]
+
+@router.delete("/{report_id}")
+async def delete_synthesis_report(report_id: str, db: AsyncSession = Depends(get_db), user_id: str = Depends(get_current_user_id)):
+    result = await db.execute(
+        select(SynthesisReport)
+        .where(SynthesisReport.id == report_id, SynthesisReport.user_id == user_id)
+    )
+    report = result.scalar_one_or_none()
+    
+    if not report:
+        raise HTTPException(status_code=404, detail="Synthesis report not found")
+        
+    await db.delete(report)
+    await db.commit()
+    
+    return {"status": "success"}
