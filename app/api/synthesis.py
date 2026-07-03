@@ -32,8 +32,14 @@ async def generate_report(req: SynthesisRequest, db: AsyncSession = Depends(get_
         
         for paper in papers:
             if paper.extracted_text:
-                combined_text += f"\n\n--- Source: {paper.title} ---\n\n"
-                combined_text += f"{paper.extracted_text}\n"
+                combined_text += f"\n\n--- Source: {paper.title} ---\n"
+                if paper.authors:
+                    combined_text += f"Authors: {paper.authors}\n"
+                if paper.year:
+                    combined_text += f"Year: {paper.year}\n"
+                if paper.journal:
+                    combined_text += f"Journal: {paper.journal}\n"
+                combined_text += f"Content:\n{paper.extracted_text}\n"
 
     # 2. Add manual text
     if req.manual_text:

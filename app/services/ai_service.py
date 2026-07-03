@@ -751,9 +751,10 @@ RULES:
 - Start the document with a `# ` header containing an intelligent, synthetic title that accurately reflects the synthesized content.
 - Do NOT invent facts.
 - Use only the provided sources. If you cite something, it must be from the text below.
+- Do NOT use placeholder references like "Reference for X". You MUST use the provided metadata (Authors, Year, Journal) to generate REAL, properly formatted citations.
 - Ensure smooth transitions and logical flow.
 - Format the output using markdown.
-- Include a references section at the end if citations are used.
+- Include a references section at the end containing all citations used in the requested style.
 """
 
     payload = {
