@@ -102,7 +102,25 @@ async def process_book_background(book_id: str, text: str, db: AsyncSession):
         
         all_chapter_summaries = []
         for i, ch in enumerate(db_chapters):
-            prompt = f"Summarize the following book chapter. Keep it concise but detailed. Focus on key ideas.\n\nChapter Text:\n{ch.text_content[:8000]}"
+            prompt = f"""Summarize the following book chapter. You MUST format your response exactly using these Markdown headers:
+
+### Chapter Summary
+(Provide a clear summary of the chapter here)
+
+### Key Concepts
+- (List core concepts)
+
+### Important Quotes
+- "(Extract significant quotes)"
+
+### Definitions
+- **Term**: Definition
+
+### Key Takeaways
+- (List actionable or main takeaways)
+
+Chapter Text:
+{ch.text_content[:8000]}"""
             summary = await ollama_generate(prompt, FAST_MODEL)
             
             ch.summary = summary.strip() if summary else "Summary failed."
@@ -117,7 +135,22 @@ async def process_book_background(book_id: str, text: str, db: AsyncSession):
         await db.commit()
         
         combined_ch_summaries = "\n\n".join(all_chapter_summaries)[:12000]
-        exec_prompt = f"Based on the following chapter summaries, generate a comprehensive executive summary for the entire book.\n\nSummaries:\n{combined_ch_summaries}"
+        exec_prompt = f"""Based on the following chapter summaries, generate a comprehensive overview for the entire book. You MUST format your response exactly using these Markdown headers:
+
+### Executive Summary
+(Provide a high-level summary of the entire book)
+
+### Key Themes
+- (List overarching themes)
+
+### Key Concepts
+- (List the most important concepts across the book)
+
+### Overall Takeaways
+- (List the ultimate conclusions or lessons)
+
+Summaries:
+{combined_ch_summaries}"""
         exec_summary = await ollama_generate(exec_prompt, SMART_MODEL)
         
         await db.execute(update(Book).where(Book.id == book_id).values(

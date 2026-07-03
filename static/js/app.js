@@ -3408,26 +3408,68 @@ async function openBookWorkspace(id) {
     state.currentBook = await res.json();
     
     document.getElementById('workspace-book-title').textContent = state.currentBook.title;
-    document.getElementById('book-exec-summary').textContent = state.currentBook.overall_summary || (state.currentBook.processing_status === 'done' ? "No summary generated." : `Processing... ${state.currentBook.progress_percent}%`);
     
-    // Render chapters
-    const chList = document.getElementById('book-chapters-list');
-    if (state.currentBook.chapters && state.currentBook.chapters.length > 0) {
-      chList.innerHTML = state.currentBook.chapters.map(ch => `
-        <div style="background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-          <h3 style="font-size: 18px; font-weight: 700; color: #111; margin-bottom: 12px;">${escHtml(ch.title)}</h3>
-          <div style="font-size: 15px; line-height: 1.6; color: #444;">${marked.parse(ch.summary || "Summary pending...")}</div>
-        </div>
-      `).join('');
+    // Parse book overview summary with marked.js instead of textContent
+    const execSummaryEl = document.getElementById('book-exec-summary');
+    if (state.currentBook.overall_summary) {
+        execSummaryEl.innerHTML = marked.parse(state.currentBook.overall_summary);
     } else {
-      chList.innerHTML = '<div style="color: #666;">No chapters extracted yet.</div>';
+        execSummaryEl.textContent = state.currentBook.processing_status === 'done' ? "No summary generated." : `Processing... ${state.currentBook.progress_percent}%`;
     }
     
+    // Render hierarchical chapters
+    const chList = document.getElementById('book-chapters-list');
+    if (state.currentBook.chapters && state.currentBook.chapters.length > 0) {
+      chList.innerHTML = state.currentBook.chapters.map(ch => {
+        const isProcessed = ch.summary && ch.summary !== "Summary pending...";
+        return `
+        <div style="background: #fff; border: 1px solid #eaeaea; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+          <div onclick="toggleBookChapter('${ch.id}')" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 24px; cursor: pointer; background: #fafafa; border-bottom: 1px solid transparent; transition: background 0.2s;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #111; margin: 0; display: flex; align-items: center; gap: 12px;">
+              ${escHtml(ch.title)}
+              <span style="font-size: 13px; font-weight: 500; padding: 2px 8px; border-radius: 20px; background: ${isProcessed ? '#dcfce7' : '#f3f4f6'}; color: ${isProcessed ? '#166534' : '#6b7280'};">
+                ${isProcessed ? '✓ Complete' : '⏳ Processing...'}
+              </span>
+            </h3>
+            <svg id="book-ch-icon-${ch.id}" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.2s;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div id="book-ch-body-${ch.id}" style="display: none; padding: 24px; font-size: 15px; line-height: 1.6; color: #333; border-top: 1px solid #eaeaea;">
+            ${isProcessed ? marked.parse(ch.summary) : 'This chapter is currently being summarized by the AI. Please wait.'}
+          </div>
+        </div>
+      `}).join('');
+    } else {
+      chList.innerHTML = '<div style="color: #666; font-style: italic;">Extracting chapters...</div>';
+    }
+    
+    // Load Book Chat history
+    loadBookChat();
+
     switchView('book-workspace');
-    switchBookTab('overview');
+    
+    // Reset tabs
+    document.querySelectorAll('.book-nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.book-tab-content').forEach(c => c.style.display = 'none');
+    document.querySelector('.book-nav-btn').classList.add('active'); // First button (Summary)
+    document.getElementById('book-tab-summary').style.display = 'block';
+
   } catch (err) {
     showToast(err.message, "error");
   }
+}
+
+function toggleBookChapter(id) {
+    const body = document.getElementById(`book-ch-body-${id}`);
+    const icon = document.getElementById(`book-ch-icon-${id}`);
+    if (!body || !icon) return;
+    
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        body.style.display = 'none';
+        icon.style.transform = 'rotate(0deg)';
+    }
 }
 
 function closeBookWorkspace() {
@@ -3447,7 +3489,137 @@ function switchBookTab(tabId) {
   }
 }
 
+// ---- Book Chat ----
+let bookChatHistory = [];
+
+async function loadBookChat() {
+    const historyContainer = document.getElementById('book-chat-history');
+    if (!historyContainer || !state.currentBook) return;
+    
+    historyContainer.innerHTML = `
+      <div class="chat-welcome" style="text-align: center; color: #666; margin-top: 40px;">
+        <div style="font-size: 32px; margin-bottom: 16px;">📚</div>
+        <p>Ask anything about <strong>${escHtml(state.currentBook.title)}</strong>.</p>
+        <p style="font-size: 13px; color: #999; margin-top: 8px;">The AI will answer using only information found in this book.</p>
+      </div>`;
+      
+    try {
+        const res = await fetch(`/api/books/${state.currentBook.id}/chat/history`);
+        if (!res.ok) throw new Error("Failed to load chat history");
+        bookChatHistory = await res.json();
+        
+        if (bookChatHistory.length > 0) {
+            historyContainer.innerHTML = '';
+            for (const msg of bookChatHistory) {
+                appendBookChatMessage(msg.role, msg.content, false);
+            }
+        }
+    } catch (err) {
+        console.error("Book chat error:", err);
+    }
+}
+
+function appendBookChatMessage(role, content, scrollToBottom = true) {
+    const historyContainer = document.getElementById('book-chat-history');
+    const div = document.createElement('div');
+    div.style.padding = '16px';
+    div.style.borderRadius = '12px';
+    div.style.marginBottom = '8px';
+    div.style.lineHeight = '1.6';
+    div.style.fontSize = '15px';
+    div.style.maxWidth = '90%';
+    
+    if (role === 'user') {
+        div.style.alignSelf = 'flex-end';
+        div.style.background = 'var(--primary)';
+        div.style.color = '#fff';
+        div.style.marginLeft = 'auto';
+        div.textContent = content;
+    } else {
+        div.style.alignSelf = 'flex-start';
+        div.style.background = '#fff';
+        div.style.border = '1px solid #eaeaea';
+        div.style.color = '#333';
+        div.innerHTML = marked.parse(content);
+    }
+    
+    historyContainer.appendChild(div);
+    if (scrollToBottom) {
+        historyContainer.scrollTop = historyContainer.scrollHeight;
+    }
+    return div;
+}
+
 async function sendBookMessage() {
-  // Coming soon
-  showToast("Book chat is coming in Phase 2!", "info");
+    if (!state.currentBook) return;
+    const input = document.getElementById('book-chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+    
+    input.value = '';
+    const historyContainer = document.getElementById('book-chat-history');
+    
+    // Clear welcome message if present
+    if (historyContainer.querySelector('.chat-welcome')) {
+        historyContainer.innerHTML = '';
+    }
+    
+    appendBookChatMessage('user', msg);
+    bookChatHistory.push({ role: 'user', content: msg });
+    
+    const replyDiv = appendBookChatMessage('assistant', '<span class="loading-dots">Thinking...</span>');
+    let fullReply = '';
+    
+    try {
+        const payload = {
+            message: msg,
+            history: bookChatHistory.slice(0, -1),
+            mode: state.aiMode,
+            api_keys: state.keys
+        };
+        
+        const response = await fetch(`/api/books/${state.currentBook.id}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) throw new Error("Chat request failed");
+        
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            let newlineIdx;
+            while ((newlineIdx = buffer.indexOf('\n\n')) >= 0) {
+                const chunk = buffer.slice(0, newlineIdx).replace(/^data: /, '').trim();
+                buffer = buffer.slice(newlineIdx + 2);
+                
+                if (chunk === '[DONE]') break;
+                if (!chunk) continue;
+                
+                const data = JSON.parse(chunk);
+                if (data.error) {
+                    fullReply = `**Error**: ${data.error}`;
+                    replyDiv.innerHTML = marked.parse(fullReply);
+                    break;
+                }
+                if (data.content) {
+                    fullReply += data.content;
+                    replyDiv.innerHTML = marked.parse(fullReply);
+                    historyContainer.scrollTop = historyContainer.scrollHeight;
+                }
+            }
+        }
+        
+        bookChatHistory.push({ role: 'assistant', content: fullReply });
+        
+    } catch (err) {
+        replyDiv.innerHTML = `<span style="color:red">Connection error: ${err.message}</span>`;
+    }
 }

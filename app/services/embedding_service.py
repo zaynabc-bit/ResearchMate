@@ -246,6 +246,65 @@ async def retrieve_relevant_chunks(
     return [text for _, text in scored[:top_k]]
 
 
+async def retrieve_book_chunks(
+    book_id: str,
+    query: str,
+    db: AsyncSession,
+    top_k: int = TOP_K_CHUNKS,
+) -> List[str]:
+    """
+    Embed the query and return the top-k most semantically similar
+    chunks from this book.
+    """
+    from app.models.book import BookChunk
+    
+    result = await db.execute(
+        select(BookChunk)
+        .where(BookChunk.book_id == book_id)
+        .order_by(BookChunk.chunk_index)
+    )
+    all_chunks = result.scalars().all()
+
+    query_vec = None
+    try:
+        query_vec = await embed_text(query)
+    except Exception as e:
+        print(f"[RAG] Local query embedding failed: {e}, falling back to text search.")
+
+    query_lower = query.lower()
+    query_words = set(query_lower.split())
+
+    scored: List[Tuple[float, str]] = []
+    for chunk in all_chunks:
+        score = 0.0
+        
+        # 1. Semantic scoring
+        if query_vec and chunk.embedding:
+            try:
+                chunk_vec = json.loads(chunk.embedding)
+                score = cosine_similarity(query_vec, chunk_vec)
+            except Exception:
+                pass
+                
+        # 2. Textual Fallback scoring
+        if score == 0.0:
+            chunk_text_lower = chunk.chunk_text.lower()
+            overlap = sum(1 for word in query_words if word in chunk_text_lower)
+            if overlap > 0:
+                score = (overlap / len(query_words)) * 0.5
+                
+        if score > 0.0:
+            scored.append((score, chunk.chunk_text))
+
+    # Sort by similarity descending
+    scored.sort(key=lambda x: x[0], reverse=True)
+    
+    if not scored:
+        return [c.chunk_text for c in all_chunks[:top_k]]
+
+    return [text for _, text in scored[:top_k]]
+
+
 async def has_chunks(paper_id: str, db: AsyncSession) -> bool:
     """Check if a paper already has chunks stored."""
     result = await db.execute(
