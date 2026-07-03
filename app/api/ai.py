@@ -93,6 +93,16 @@ async def summarise_paper(
         raise HTTPException(status_code=404, detail="Paper not found")
     if not paper.extracted_text:
         raise HTTPException(status_code=400, detail="No text extracted from this paper")
+        
+    # Safeguard against users uploading massive textbooks to the standard library
+    # 150,000 chars is roughly 40-50 pages. Anything larger should go to the Books workspace.
+    if len(paper.extracted_text) > 150000:
+        paper.summary_status = "error"
+        await db.commit()
+        raise HTTPException(
+            status_code=413, 
+            detail="This document is too large for the standard Library. Please upload massive textbooks using the new 'Books' workspace."
+        )
 
     ollama_ok = await check_ollama_available()
     import os

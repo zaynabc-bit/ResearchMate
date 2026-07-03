@@ -136,8 +136,11 @@ async def upload_paper(
         from app.services.embedding_service import check_embed_available, build_paper_chunks
         embed_ok = await check_embed_available()
         if embed_ok and paper.extracted_text:
-            print(f"[Upload] Automatically building chunks and embeddings for paper {paper.id}...")
-            await build_paper_chunks(paper.id, paper.extracted_text, db)
+            if len(paper.extracted_text) > 150000:
+                print(f"[Upload] Skipping auto-embedding for {paper.id} because it exceeds 150,000 chars (likely a textbook).")
+            else:
+                print(f"[Upload] Automatically building chunks and embeddings for paper {paper.id}...")
+                await build_paper_chunks(paper.id, paper.extracted_text, db)
     except Exception as e:
         print(f"[Upload] Failed to build embeddings automatically: {e}")
 
